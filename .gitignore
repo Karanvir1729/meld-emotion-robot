@@ -1,0 +1,15 @@
+# Environment
+.venv/
+__pycache__/
+*.pyc
+
+# Data, model weights and training artifacts (downloaded / produced by scripts)
+data/
+artifacts/
+
+# OS / editor
+.DS_Store
+
+# Training outputs: checkpoints and logits stay local, the small json/markdown results are committed
+runs/**/*.pt
+runs/smoke*/

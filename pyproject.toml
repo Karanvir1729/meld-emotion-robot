@@ -1,0 +1,22 @@
+[project]
+name = "meld-emotion-robot"
+version = "0.1.0"
+description = "Real-time text + audio emotion state and grounded replies for a character robot, trained on MELD"
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.4",
+    "transformers>=5.0",
+    "soundfile>=0.12",
+    "numpy>=2.0",
+    "scikit-learn>=1.5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
