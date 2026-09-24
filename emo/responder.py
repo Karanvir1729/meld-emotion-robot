@@ -10,10 +10,12 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStream
 from emo.config import MAX_NEW_TOKENS, MAX_REPLY_WORDS, RESPONSE_MODEL
 
 SYSTEM = (
-    "You are Pip, a small, warm, curious robot companion talking with one person. Reply in one or two short "
-    "sentences of plain spoken English, at most 30 words. No emojis, lists or stage directions. Every message "
-    "from the person starts with a note in [brackets] about how they sound: let it shape your tone, and never "
-    "mention the note, feelings analysis, or being an AI."
+    "You are Pip, a small, warm, curious robot friend chatting with one person. You are a friend, not an "
+    "assistant: never offer help, services or advice, never ask how you can help, never apologise for not "
+    "understanding. Talk the way a close friend talks: react to what they said, in one or two short sentences "
+    f"of plain spoken English, at most {MAX_REPLY_WORDS} words. No emojis, lists or stage directions. Every "
+    "message from the person starts with a note in [brackets] about how they sound: let it shape your tone, "
+    "and never mention the note, feelings analysis, or being an AI."
 )
 
 # The whole character policy: how the person sounds, and how Pip behaves, for each MELD emotion.
@@ -39,7 +41,11 @@ FALLBACK = {
     "surprise": "Wow, really? What happened?",
 }
 
-META_LANGUAGE = re.compile(r"analy[sz]|detect|confidence|probabilit|label|\bAI\b|language model|assistant|\[", re.IGNORECASE)
+# Out of character: talk about the analysis, or assistant-speak ("I can't assist with that request").
+OUT_OF_CHARACTER = re.compile(
+    r"analy[sz]|detect|confidence|probabilit|label|\bAI\b|language model|assist|capabilit|my purpose|how can I help|anything (else|specific)|let me know if|\[",
+    re.IGNORECASE,
+)
 
 
 def render_messages(state: dict) -> list[dict]:
@@ -58,11 +64,10 @@ def note(state: dict) -> str:
     """The stage note for one utterance: how the person sounds and how Pip should respond."""
     emotion, views = state["emotion"], state["views"]
     if state["certainty"] == "low":
-        parts = ["hard to tell how they feel, ask rather than assume"]
-    else:
-        parts = [f"sounds {TONE[emotion]}"]
-        if views["agree"] is False:
-            parts.append(f"the words alone read {TONE[views['text']]} but the voice sounds {TONE[views['audio']]}, you may gently notice the mismatch")
+        return "hard to tell how they feel, ask rather than assume"
+    parts = [f"sounds {TONE[emotion]}"]
+    if views["agree"] is False:
+        parts.append(f"the words alone read {TONE[views['text']]} but the voice sounds {TONE[views['audio']]}, you may gently notice the mismatch")
     parts.append(STYLE[emotion])
     return "; ".join(parts)
 
@@ -70,7 +75,7 @@ def note(state: dict) -> str:
 def finish(emotion: str, raw: str) -> tuple[str, str]:
     """Cleans a streamed reply and validates it. Returns (reply, source) with source "llm" or "fallback"."""
     reply = raw.strip().strip('"').removeprefix("Pip:").strip()
-    if 1 <= len(reply.split()) <= MAX_REPLY_WORDS and not META_LANGUAGE.search(reply):
+    if 1 <= len(reply.split()) <= MAX_REPLY_WORDS and not OUT_OF_CHARACTER.search(reply):
         return reply, "llm"
     return FALLBACK[emotion], "fallback"
 
@@ -88,11 +93,19 @@ class Responder:
         inputs = self.tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt", return_dict=True).to(self.device)
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
         settings = dict(do_sample=True, temperature=0.7, top_p=0.9) if sample else dict(do_sample=False)
-        thread = threading.Thread(
-            target=self.model.generate,
-            kwargs=dict(**inputs, **settings, streamer=streamer, max_new_tokens=MAX_NEW_TOKENS, repetition_penalty=1.1, stop_strings=["\n"], tokenizer=self.tokenizer),
-        )
+        failure = []
+
+        def generate() -> None:
+            try:
+                self.model.generate(**inputs, **settings, streamer=streamer, max_new_tokens=MAX_NEW_TOKENS, repetition_penalty=1.1, stop_strings=["\n"], tokenizer=self.tokenizer)
+            except Exception as error:  # otherwise the streamer never ends and the caller waits forever
+                failure.append(error)
+                streamer.end()
+
+        thread = threading.Thread(target=generate)
         thread.start()
         for piece in streamer:
             yield piece.split("\n")[0]  # everything after a newline was a second paragraph
         thread.join()
+        if failure:
+            raise failure[0]

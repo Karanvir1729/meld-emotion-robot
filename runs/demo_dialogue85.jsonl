@@ -1,0 +1,70 @@
+{"event": "state", "session_id": "s1", "turn": 1, "text": "But um, I don\u2019t think it\u2019s anything serious.", "audio_seconds": 2.79, "emotion": "neutral", "confidence": 0.562, "certainty": "medium", "probs": {"neutral": 0.562, "joy": 0.068, "sadness": 0.091, "anger": 0.051, "fear": 0.152, "disgust": 0.056, "surprise": 0.021}, "views": {"text": "neutral", "audio": "neutral", "agree": true}, "context": [], "latency_ms": {"state": 430}}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "What "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "else?"}
+{"event": "done", "session_id": "s1", "turn": 1, "response": "What else?", "source": "llm", "prompt": "[sounds calm; keep it light and ask a small follow-up question] But um, I don\u2019t think it\u2019s anything serious.", "latency_ms": {"state": 430, "first_token": 1182, "response": 1247}}
+{"event": "state", "session_id": "s1", "turn": 2, "text": "This sounds like a hernia. You have to\u2014you-you\u2014Go to the doctor!", "audio_seconds": 3.01, "emotion": "surprise", "confidence": 0.364, "certainty": "low", "probs": {"neutral": 0.071, "joy": 0.08, "sadness": 0.125, "anger": 0.172, "fear": 0.097, "disgust": 0.091, "surprise": 0.364}, "views": {"text": "surprise", "audio": "surprise", "agree": true}, "context": [{"speaker": "user", "text": "But um, I don\u2019t think it\u2019s anything serious.", "emotion": "neutral"}, {"speaker": "robot", "text": "What else?"}], "latency_ms": {"state": 83}}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "I "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "see. "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "It's "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "important "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "to "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "address "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "this "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "issue "}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "promptly."}
+{"event": "done", "session_id": "s1", "turn": 2, "response": "I see. It's important to address this issue promptly.", "source": "llm", "prompt": "[hard to tell how they feel, ask rather than assume] This sounds like a hernia. You have to\u2014you-you\u2014Go to the doctor!", "latency_ms": {"state": 83, "first_token": 824, "response": 1307}}
+{"event": "state", "session_id": "s1", "turn": 3, "text": "No way!", "audio_seconds": 1.26, "emotion": "surprise", "confidence": 0.324, "certainty": "low", "probs": {"neutral": 0.059, "joy": 0.065, "sadness": 0.146, "anger": 0.305, "fear": 0.042, "disgust": 0.06, "surprise": 0.324}, "views": {"text": "anger", "audio": "neutral", "agree": false}, "context": [{"speaker": "user", "text": "But um, I don\u2019t think it\u2019s anything serious.", "emotion": "neutral"}, {"speaker": "robot", "text": "What else?"}, {"speaker": "user", "text": "This sounds like a hernia. You have to\u2014you-you\u2014Go to the doctor!", "emotion": "surprise"}, {"speaker": "robot", "text": "I see. It's important to address this issue promptly."}], "latency_ms": {"state": 119}}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "Please "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "go "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "to "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "the "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "emergency "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "room "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "as "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "soon "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "as "}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "possible."}
+{"event": "done", "session_id": "s1", "turn": 3, "response": "Please go to the emergency room as soon as possible.", "source": "llm", "prompt": "[hard to tell how they feel, ask rather than assume] No way!", "latency_ms": {"state": 119, "first_token": 858, "response": 1244}}
+{"event": "state", "session_id": "s1", "turn": 4, "text": "\u2018Kay look, if I have to go to the doctor for anything it\u2019s gonna be for this thing sticking out of my stomach!", "audio_seconds": 5.18, "emotion": "anger", "confidence": 0.62, "certainty": "medium", "probs": {"neutral": 0.03, "joy": 0.028, "sadness": 0.072, "anger": 0.62, "fear": 0.163, "disgust": 0.074, "surprise": 0.013}, "views": {"text": "anger", "audio": "anger", "agree": true}, "context": [{"speaker": "user", "text": "This sounds like a hernia. You have to\u2014you-you\u2014Go to the doctor!", "emotion": "surprise"}, {"speaker": "robot", "text": "I see. It's important to address this issue promptly."}, {"speaker": "user", "text": "No way!", "emotion": "surprise"}, {"speaker": "robot", "text": "Please go to the emergency room as soon as possible."}], "latency_ms": {"state": 181}}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "Absolutely, "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "I "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "understand "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "the "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "urgency. "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "The "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "doctor "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "is "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "needed "}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "now."}
+{"event": "done", "session_id": "s1", "turn": 4, "response": "Absolutely, I understand the urgency. The doctor is needed now.", "source": "llm", "prompt": "[sounds angry; stay calm and steady, acknowledge the frustration, no jokes, no arguing] \u2018Kay look, if I have to go to the doctor for anything it\u2019s gonna be for this thing sticking out of my stomach!", "latency_ms": {"state": 181, "first_token": 982, "response": 1319}}
+{"event": "state", "session_id": "s1", "turn": 5, "text": "Why did I have to start working out again?", "audio_seconds": 2.88, "emotion": "surprise", "confidence": 0.416, "certainty": "low", "probs": {"neutral": 0.195, "joy": 0.028, "sadness": 0.114, "anger": 0.184, "fear": 0.043, "disgust": 0.02, "surprise": 0.416}, "views": {"text": "surprise", "audio": "anger", "agree": false}, "context": [{"speaker": "user", "text": "No way!", "emotion": "surprise"}, {"speaker": "robot", "text": "Please go to the emergency room as soon as possible."}, {"speaker": "user", "text": "\u2018Kay look, if I have to go to the doctor for anything it\u2019s gonna be for this thing sticking out of my stomach!", "emotion": "anger"}, {"speaker": "robot", "text": "Absolutely, I understand the urgency. The doctor is needed now."}], "latency_ms": {"state": 179}}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "I\u2019m "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "sorry "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "to "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "hear "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "that. "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "It "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "might "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "be "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "time "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "to "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "consult "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "a "}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "professional."}
+{"event": "done", "session_id": "s1", "turn": 5, "response": "I\u2019m sorry to hear that. It might be time to consult a professional.", "source": "llm", "prompt": "[hard to tell how they feel, ask rather than assume] Why did I have to start working out again?", "latency_ms": {"state": 179, "first_token": 948, "response": 1530}}
+{"event": "state", "session_id": "s1", "turn": 6, "text": "Damn you 15s!", "audio_seconds": 1.79, "emotion": "anger", "confidence": 0.709, "certainty": "high", "probs": {"neutral": 0.011, "joy": 0.051, "sadness": 0.031, "anger": 0.709, "fear": 0.008, "disgust": 0.181, "surprise": 0.01}, "views": {"text": "anger", "audio": "anger", "agree": true}, "context": [{"speaker": "user", "text": "\u2018Kay look, if I have to go to the doctor for anything it\u2019s gonna be for this thing sticking out of my stomach!", "emotion": "anger"}, {"speaker": "robot", "text": "Absolutely, I understand the urgency. The doctor is needed now."}, {"speaker": "user", "text": "Why did I have to start working out again?", "emotion": "surprise"}, {"speaker": "robot", "text": "I\u2019m sorry to hear that. It might be time to consult a professional."}], "latency_ms": {"state": 121}}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "Sorry, "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "I "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "didn't "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "mean "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "to "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "sound "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "so "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "negative. "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "Let's "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "talk "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "about "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "something "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "else "}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "instead."}
+{"event": "done", "session_id": "s1", "turn": 6, "response": "Sorry, I didn't mean to sound so negative. Let's talk about something else instead.", "source": "llm", "prompt": "[sounds angry; stay calm and steady, acknowledge the frustration, no jokes, no arguing] Damn you 15s!", "latency_ms": {"state": 121, "first_token": 853, "response": 1415}}

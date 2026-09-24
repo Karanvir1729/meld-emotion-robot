@@ -1,0 +1,15 @@
+{"event": "state", "session_id": "s1", "turn": 1, "text": "I know.", "audio_seconds": 4.18, "emotion": "neutral", "confidence": 0.9, "certainty": "high", "probs": {"neutral": 0.9, "joy": 0.023, "sadness": 0.016, "anger": 0.031, "fear": 0.015, "disgust": 0.009, "surprise": 0.005}, "views": {"text": "neutral", "audio": "anger", "agree": false}, "context": [], "latency_ms": {"state": 469}}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "Oh, "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "don't "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "worry! "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "I'm "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "just "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "being "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "careful. "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "What "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "do "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "you "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "need "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "help "}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "with?"}
+{"event": "done", "session_id": "s1", "turn": 1, "response": "Oh, don't worry! I'm just being careful. What do you need help with?", "source": "llm", "prompt": "[sounds calm; the words alone read calm but the voice sounds angry, you may gently notice the mismatch; keep it light and ask a small follow-up question] I know.", "latency_ms": {"state": 469, "first_token": 1249, "response": 1847}}

@@ -24,6 +24,7 @@ RESPONSE_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"  # 494 M, frozen reply generator
 SAMPLE_RATE = 16_000
 MAX_AUDIO_SECONDS = 10.0  # MELD median is 2.5 s; longer clips are cropped
 MIN_AUDIO_SECONDS = 0.3  # shorter clips are treated as "no audio"
+MAX_UTTERANCE_SECONDS = 60  # longer "clips" are extraction errors (two in MELD test); also "no audio"
 AUDIO_LAYERS = 13  # WavLM-base-plus hidden states: embeddings + 12 layers
 AUDIO_DIM = 768
 
@@ -42,7 +43,7 @@ MODALITY_DROPOUT = 0.15  # fraction of training samples whose audio is hidden fr
 # --- Inference ---------------------------------------------------------------
 DEPLOYED_RUN = "both"  # run directory used by demo / serve / bench (fixed before evaluation)
 CERTAINTY_THRESHOLDS = {"high": 0.70, "medium": 0.45}  # on calibrated max-probability
-MEMORY_TURNS = 4  # dialogue turns remembered per session
+MEMORY_MESSAGES = 4  # remembered messages per session; the person and Pip alternate, so two exchanges
 MAX_REPLY_WORDS = 30
 MAX_NEW_TOKENS = 48
 REALTIME_TARGETS_MS = {"state": 300, "first_token": 800, "response": 2500}  # p95 after the utterance ends; see README

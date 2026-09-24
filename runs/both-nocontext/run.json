@@ -1,0 +1,14 @@
+{
+  "modalities": "both",
+  "context": 0,
+  "seed": 0,
+  "epochs": 4,
+  "limit": null,
+  "name": null,
+  "device": "mps",
+  "best_epoch": 3,
+  "dev_weighted_f1": 0.6027,
+  "temperature": 1.211,
+  "train_minutes": 15.6,
+  "parameters": 82588194
+}

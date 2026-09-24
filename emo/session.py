@@ -9,10 +9,10 @@ import torch
 from transformers import AutoTokenizer
 
 from emo.audio import AudioEncoder, load_audio
-from emo.config import AUDIO_DIM, AUDIO_LAYERS, CERTAINTY_THRESHOLDS, DEPLOYED_RUN, EMOTIONS, MEMORY_TURNS, RUNS_DIR, SAMPLE_RATE, TEXT_MODEL, pick_device
+from emo.config import AUDIO_DIM, AUDIO_LAYERS, CERTAINTY_THRESHOLDS, DEPLOYED_RUN, EMOTIONS, MEMORY_MESSAGES, RUNS_DIR, SAMPLE_RATE, TEXT_MODEL, pick_device
 from emo.data import tokenize
 from emo.model import count_parameters, load
-from emo.responder import Responder, finish, render_messages
+from emo.responder import FALLBACK, Responder, finish, render_messages
 
 
 class Classifier:
@@ -40,10 +40,11 @@ class Classifier:
             "audio": EMOTIONS[logits["audio"].argmax()] if present and "audio" in logits else None,
         }
         views["agree"] = views["text"] == views["audio"] if views["text"] and views["audio"] else None
+        confidence = round(probs.max().item(), 3)
         return {
             "emotion": EMOTIONS[probs.argmax()],
-            "confidence": round(probs.max().item(), 3),
-            "certainty": certainty(probs.max().item()),
+            "confidence": confidence,
+            "certainty": certainty(confidence),
             "probs": {e: round(p, 3) for e, p in zip(EMOTIONS, probs.tolist())},
             "views": views,
         }
@@ -62,7 +63,7 @@ class Session:
         self.classifier = classifier
         self.responder = responder
         self.session_id = session_id
-        self.memory: deque[dict] = deque(maxlen=MEMORY_TURNS)  # {"speaker": "user"|"robot", "text", "emotion" (user only)}
+        self.memory: deque[dict] = deque(maxlen=MEMORY_MESSAGES)  # {"speaker": "user"|"robot", "text", "emotion" (user only)}
         self.turn = 0
 
     def step(self, text: str, audio_path: str | None = None) -> Iterator[dict]:
@@ -89,14 +90,17 @@ class Session:
         self.memory.append({"speaker": "user", "text": text, "emotion": state["emotion"]})
 
         messages = render_messages(state)
-        pieces, first_token_ms = [], None
-        for piece in self.responder.stream(messages):
-            if not piece:  # the streamer flushes empty strings while it buffers partial words
-                continue
-            first_token_ms = first_token_ms or elapsed_ms()
-            pieces.append(piece)
-            yield {"event": "token", "session_id": self.session_id, "turn": self.turn, "text": piece}
-        reply, source = finish(state["emotion"], "".join(pieces))
+        pieces, first_token_ms, error = [], None, None
+        try:
+            for piece in self.responder.stream(messages):
+                if not piece:  # the streamer flushes empty strings while it buffers partial words
+                    continue
+                first_token_ms = first_token_ms or elapsed_ms()
+                pieces.append(piece)
+                yield {"event": "token", "session_id": self.session_id, "turn": self.turn, "text": piece}
+            reply, source = finish(state["emotion"], "".join(pieces))
+        except Exception as failure:  # the robot still gets a line; the failure is reported in the event
+            reply, source, error = FALLBACK[state["emotion"]], "fallback", f"{type(failure).__name__}: {failure}"
         self.memory.append({"speaker": "robot", "text": reply})
         yield {
             "event": "done",
@@ -106,6 +110,7 @@ class Session:
             "source": source,
             "prompt": messages[-1]["content"],
             "latency_ms": {"state": state["latency_ms"]["state"], "first_token": first_token_ms, "response": elapsed_ms()},
+            **({"error": error} if error else {}),
         }
 
 

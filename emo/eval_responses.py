@@ -32,16 +32,19 @@ def main() -> None:
         # Counterfactual: the same turn with only the emotion fields changed, greedy decoding on both sides.
         other = EMOTIONS[(EMOTIONS.index(state["emotion"]) + 1) % len(EMOTIONS)]
         altered = {**state, "emotion": other, "views": {"text": other, "audio": other, "agree": True}}
-        greedy = finish(state["emotion"], "".join(responder.stream(render_messages(state), sample=False)))[0]
-        counterfactual = finish(other, "".join(responder.stream(render_messages(altered), sample=False)))[0]
+        greedy, greedy_source = finish(state["emotion"], "".join(responder.stream(render_messages(state), sample=False)))
+        counterfactual, counterfactual_source = finish(other, "".join(responder.stream(render_messages(altered), sample=False)))
         records.append({"text": row["text"], "meld_label": row["emotion"], "state": state["emotion"], "reply": done["response"], "source": done["source"],
-                        "greedy_reply": greedy, "counterfactual_emotion": other, "counterfactual_reply": counterfactual, "changed": greedy != counterfactual})
+                        "greedy_reply": greedy, "counterfactual_emotion": other, "counterfactual_reply": counterfactual,
+                        "both_llm": greedy_source == counterfactual_source == "llm", "changed": greedy != counterfactual})
 
+    llm_pairs = [r for r in records if r["both_llm"]]  # only pairs where the model, not a fallback line, wrote both replies
     summary = {
         "utterances": len(records),
         "fallback_rate": round(sum(r["source"] == "fallback" for r in records) / len(records), 3),
         "mean_words": round(sum(len(r["reply"].split()) for r in records) / len(records), 1),
-        "changed_by_counterfactual_emotion": round(sum(r["changed"] for r in records) / len(records), 3),
+        "llm_pairs": len(llm_pairs),
+        "changed_by_counterfactual_emotion": round(sum(r["changed"] for r in llm_pairs) / len(llm_pairs), 3),
     }
     (RUNS_DIR / "responses.json").write_text(json.dumps({"summary": summary, "records": records}, indent=2))
     lines = ["# Reply checks on dev utterances", "", json.dumps(summary), "", "| person said | state | Pip (greedy) | if the state were... | Pip would say instead (greedy) |", "|---|---|---|---|---|"]

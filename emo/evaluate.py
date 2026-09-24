@@ -7,8 +7,9 @@ import torch
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
 from emo.config import CERTAINTY_THRESHOLDS, DEPLOYED_RUN, EMOTIONS, RUNS_DIR
+from emo.model import primary_head
 
-RUN_ORDER = ["text", "audio", "both-nocontext", "both"]
+DISPLAY_NAMES = {"text": "text only", "audio": "audio only", "both-nocontext": "text + audio, no context", "both": "text + audio (deployed)"}
 
 
 def weighted_f1(labels, preds) -> float:
@@ -16,18 +17,20 @@ def weighted_f1(labels, preds) -> float:
 
 
 def main() -> None:
-    runs = {name: load_run(name) for name in RUN_ORDER if (RUNS_DIR / name / "logits_test.pt").exists()}
+    runs = {name: load_run(name) for name in DISPLAY_NAMES if (RUNS_DIR / name / "logits_test.pt").exists()}
     if not runs:
         raise SystemExit("no finished runs under runs/; train first")
-    labels = next(iter(runs.values()))["labels"]
+    first = next(iter(runs.values()))
+    assert all(run["ids"] == first["ids"] for run in runs.values()), "runs were scored on different test manifests"
+    labels = first["labels"]
     metrics = {"n_test": int(len(labels))}
     report = ["# Results on the MELD test split", ""]
 
     # 1. Classification table: every run's primary head, plus the deployed model's single-modality heads.
     rows = [("majority class (neutral)", scores(labels, np.zeros_like(labels)))]
-    rows += [(name, scores(labels, run["preds"])) for name, run in runs.items()]
+    rows += [(DISPLAY_NAMES[name], scores(labels, run["preds"])) for name, run in runs.items()]
     if DEPLOYED_RUN in runs:
-        rows += [(f"{DEPLOYED_RUN}: {head} head only", scores(labels, runs[DEPLOYED_RUN]["heads"][head])) for head in ("text", "audio")]
+        rows += [(f"deployed model, {head} head only (views.{head})", scores(labels, runs[DEPLOYED_RUN]["heads"][head])) for head in ("text", "audio")]
     metrics["classification"] = dict(rows)
     report += ["## Classification", "", table(["model", "weighted-F1", "macro-F1", "accuracy"] + EMOTIONS, [
         [name, s["weighted_f1"], s["macro_f1"], s["accuracy"]] + [s["per_class_f1"][e] for e in EMOTIONS] for name, s in rows
@@ -36,7 +39,7 @@ def main() -> None:
     # 2. Does audio add measurable value? Paired bootstrap over test utterances.
     if {"both", "text"} <= runs.keys():
         low, high = bootstrap_delta(labels, runs["both"]["preds"], runs["text"]["preds"])
-        delta = rows_lookup(rows, "both")["weighted_f1"] - rows_lookup(rows, "text")["weighted_f1"]
+        delta = dict(rows)[DISPLAY_NAMES["both"]]["weighted_f1"] - dict(rows)[DISPLAY_NAMES["text"]]["weighted_f1"]
         metrics["audio_gain"] = {"delta_weighted_f1": round(delta, 4), "ci95": [round(low, 4), round(high, 4)]}
         report += ["## Audio gain over text (paired bootstrap, 1000 resamples)", "",
                    f"weighted-F1(both) - weighted-F1(text) = {delta:+.4f}, 95% CI [{low:+.4f}, {high:+.4f}]", ""]
@@ -84,9 +87,8 @@ def load_run(name: str) -> dict:
     """Test labels, argmax of every head, and calibrated probabilities of the primary head."""
     data = torch.load(RUNS_DIR / name / "logits_test.pt")
     info = json.loads((RUNS_DIR / name / "run.json").read_text())
-    primary = "fused" if info["modalities"] == "both" else info["modalities"]
-    probs = torch.softmax(data["logits"][primary] / info["temperature"], dim=-1).numpy()
-    return {"labels": data["labels"].numpy(), "heads": {h: l.argmax(1).numpy() for h, l in data["logits"].items()}, "probs": probs, "preds": probs.argmax(1), "info": info}
+    probs = torch.softmax(data["logits"][primary_head(info["modalities"])] / info["temperature"], dim=-1).numpy()
+    return {"ids": data["ids"], "labels": data["labels"].numpy(), "heads": {h: l.argmax(1).numpy() for h, l in data["logits"].items()}, "probs": probs, "preds": probs.argmax(1), "info": info}
 
 
 def scores(labels: np.ndarray, preds: np.ndarray) -> dict:
@@ -107,10 +109,6 @@ def bootstrap_delta(labels: np.ndarray, preds_a: np.ndarray, preds_b: np.ndarray
         idx = rng.integers(0, len(labels), len(labels))
         deltas.append(weighted_f1(labels[idx], preds_a[idx]) - weighted_f1(labels[idx], preds_b[idx]))
     return float(np.percentile(deltas, 2.5)), float(np.percentile(deltas, 97.5))
-
-
-def rows_lookup(rows: list[tuple[str, dict]], name: str) -> dict:
-    return dict(rows)[name]
 
 
 def table(headers: list, rows: list[list]) -> str:

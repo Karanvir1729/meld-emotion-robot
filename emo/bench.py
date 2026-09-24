@@ -2,9 +2,11 @@
 
 import argparse
 import json
+import os
 import platform
 import resource
 import subprocess
+import sys
 import time
 
 import numpy as np
@@ -41,7 +43,8 @@ def main() -> None:
             continue
         state, done = events[0], events[-1]
         latency = {**done["latency_ms"], "first_token": done["latency_ms"]["first_token"] or done["latency_ms"]["response"]}  # empty reply: no token
-        turns.append({**latency, "audio_s": state["audio_seconds"], "tokens": sum(e["event"] == "token" for e in events), "source": done["source"]})
+        generated = "".join(e["text"] for e in events if e["event"] == "token")
+        turns.append({**latency, "tokens": len(responder.tokenizer(generated)["input_ids"]), "source": done["source"]})
 
     def percentile(key: str, q: int) -> int:
         return round(float(np.percentile([t[key] for t in turns], q)))
@@ -55,9 +58,8 @@ def main() -> None:
         "cold_start_s": round(cold_start_s, 1),
         "latency_ms": {key: {"p50": percentile(key, 50), "p95": percentile(key, 95), "target_p95": REALTIME_TARGETS_MS[key]} for key in REALTIME_TARGETS_MS},
         "decode_tokens_per_s": round(sum(t["tokens"] for t in turns) / decode_s, 1),
-        "audio_real_time_factor": round(float(np.median([t["state"] / 1000 / t["audio_s"] for t in turns])), 3),
         "fallback_rate": round(sum(t["source"] == "fallback" for t in turns) / len(turns), 3),
-        "peak_rss_gb": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e9, 2),
+        "peak_rss_gb": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024) / 1e9, 2),
         "mps_allocated_gb": round(torch.mps.driver_allocated_memory() / 1e9, 2) if device.type == "mps" else None,
         "parameters_millions": parameter_counts(classifier, responder),
     }
@@ -67,10 +69,12 @@ def main() -> None:
 
 
 def hardware() -> dict:
+    """CPU name, memory and versions; the CPU name needs a platform-specific call."""
+    cpu = shell("sysctl", "-n", "machdep.cpu.brand_string") if sys.platform == "darwin" else platform.processor() or platform.machine()
     return {
-        "cpu": shell("sysctl", "-n", "machdep.cpu.brand_string"),
-        "memory_gb": round(int(shell("sysctl", "-n", "hw.memsize")) / 2**30),
-        "os": f"macOS {shell('sw_vers', '-productVersion')}",
+        "cpu": cpu,
+        "memory_gb": round(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30),
+        "os": f"macOS {platform.mac_ver()[0]}" if sys.platform == "darwin" else platform.platform(),
         "python": platform.python_version(),
         "torch": torch.__version__,
         "transformers": transformers.__version__,

@@ -15,6 +15,7 @@ from emo.config import (
     DATA_DIR,
     EMOTIONS,
     MAX_TEXT_TOKENS,
+    MAX_UTTERANCE_SECONDS,
     MELD_AUDIO_URL,
     MELD_CSV_URL,
     MELD_DIR,
@@ -42,7 +43,8 @@ def build_manifests() -> None:
     """CSV rows -> data/{split}.jsonl. Adds the previous utterance of the dialogue and the clip path.
 
     Rows whose clip is missing or unreadable are dropped (MELD ships two such clips).
-    Clips shorter than MIN_AUDIO_SECONDS are kept but marked, so the model learns to cope without audio.
+    Rows whose clip is too short or implausibly long are kept but marked has_audio=False,
+    so the model learns to cope without audio.
     """
     for split in SPLITS:
         rows = _read_csv(split)
@@ -56,7 +58,7 @@ def build_manifests() -> None:
                 dropped.append(row["id"])
                 continue
             row["duration_s"] = round(duration, 2)
-            row["has_audio"] = duration >= MIN_AUDIO_SECONDS
+            row["has_audio"] = MIN_AUDIO_SECONDS <= duration <= MAX_UTTERANCE_SECONDS
             short += not row["has_audio"]
             kept.append(row)
         with open(DATA_DIR / f"{split}.jsonl", "w") as f:
@@ -80,11 +82,18 @@ def _read_csv(split: str) -> list[dict]:
                 "speaker": r["Speaker"],
                 "text": r["Utterance"].strip(),
                 "emotion": r["Emotion"],
-                "audio_path": str(MELD_DIR / "audio" / split / f"dia{r['Dialogue_ID']}_utt{r['Utterance_ID']}.flac"),
+                "audio_path": _clip_path(split, r["Dialogue_ID"], r["Utterance_ID"]),
             }
             for r in csv.DictReader(f)
         ]
     return sorted(rows, key=lambda r: (r["dialogue_id"], r["utterance_id"]))
+
+
+def _clip_path(split: str, dialogue_id: str, utterance_id: str) -> str:
+    """MELD re-extracted 132 test clips as final_videos_test<name>.flac; their plain-named twins are wrong clips."""
+    name = f"dia{dialogue_id}_utt{utterance_id}.flac"
+    fixed = MELD_DIR / "audio" / split / f"final_videos_test{name}"
+    return str(fixed if fixed.exists() else MELD_DIR / "audio" / split / name)
 
 
 def _clip_duration(path: str) -> float | None:

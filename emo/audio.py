@@ -10,7 +10,8 @@ import soundfile as sf
 import torch
 from transformers import AutoFeatureExtractor, AutoModel
 
-from emo.config import AUDIO_MODEL, DATA_DIR, MAX_AUDIO_SECONDS, MIN_AUDIO_SECONDS, SAMPLE_RATE, SPLITS, pick_device
+from emo.config import AUDIO_MODEL, DATA_DIR, MAX_AUDIO_SECONDS, MIN_AUDIO_SECONDS, SAMPLE_RATE, pick_device
+from emo.data import load_manifest
 
 
 def load_audio(path: str) -> np.ndarray | None:
@@ -54,8 +55,6 @@ def build_feature_cache(device: torch.device) -> None:
 
     Smallest split first, so a problem shows up early; each file is written atomically.
     """
-    from emo.data import load_manifest
-
     if shutil.disk_usage(DATA_DIR).free < 1e9:
         raise SystemExit("less than 1 GB of free disk: the feature cache needs ~300 MB, plus headroom for swap")
     encoder = AudioEncoder(device)

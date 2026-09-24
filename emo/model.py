@@ -39,7 +39,7 @@ class EmotionModel(nn.Module):
 
     @property
     def primary(self) -> str:
-        return "fused" if self.modalities == "both" else self.modalities
+        return primary_head(self.modalities)
 
     def forward(self, tokens: dict | None = None, audio: torch.Tensor | None = None, audio_present: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         """tokens: tokenizer output; audio: [B, 13, 768]; audio_present: [B] bool (False -> audio is ignored)."""
@@ -59,6 +59,11 @@ class EmotionModel(nn.Module):
     def probabilities(self, logits: dict[str, torch.Tensor]) -> torch.Tensor:
         """Calibrated class probabilities of the primary head."""
         return torch.softmax(logits[self.primary] / self.temperature, dim=-1)
+
+
+def primary_head(modalities: str) -> str:
+    """The head whose prediction is the model's answer."""
+    return "fused" if modalities == "both" else modalities
 
 
 def save(model: EmotionModel, path) -> None:

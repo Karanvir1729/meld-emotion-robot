@@ -44,3 +44,16 @@ def test_invalid_reply_falls_back_to_the_hand_written_line():
     session = Session(StubClassifier(), StubResponder(["As an AI language model I detect anger."]))
     done = list(session.step("Ugh."))[-1]
     assert (done["response"], done["source"]) == (FALLBACK["anger"], "fallback")
+
+
+def test_generation_failure_still_ends_the_turn():
+    class BrokenResponder:
+        def stream(self, messages, sample=True):
+            raise RuntimeError("out of memory")
+            yield  # makes this a generator
+
+    session = Session(StubClassifier(), BrokenResponder())
+    events = list(session.step("Ugh."))
+    assert [e["event"] for e in events] == ["state", "done"]
+    assert events[-1]["source"] == "fallback" and events[-1]["error"] == "RuntimeError: out of memory"
+    assert session.memory[-1] == {"speaker": "robot", "text": FALLBACK["anger"]}  # memory stays paired
