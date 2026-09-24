@@ -1,0 +1,87 @@
+{
+  "summary": {
+    "utterances": 7,
+    "fallback_rate": 0.143,
+    "mean_words": 11.6,
+    "changed_by_counterfactual_emotion": 1.0
+  },
+  "records": [
+    {
+      "text": "Oh my God, he\u2019s lost it. He\u2019s totally lost it.",
+      "meld_label": "sadness",
+      "state": "neutral",
+      "reply": "I'm here to listen and help, not be a problem. Let's talk more about what happened next?",
+      "source": "llm",
+      "greedy_reply": "I'm sorry to hear that! Let's try to help him find his way back home.",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "I'm so sorry to hear that! Let's cheer him up together.",
+      "changed": true
+    },
+    {
+      "text": "What?",
+      "meld_label": "surprise",
+      "state": "neutral",
+      "reply": "Sounds great! How can I assist you today?",
+      "source": "llm",
+      "greedy_reply": "What's up?",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "I'm glad to hear you're feeling cheerful! Let's play some games together, shall we?",
+      "changed": true
+    },
+    {
+      "text": "Or! Or, we could go to the bank, close our accounts and cut them off at the source.",
+      "meld_label": "neutral",
+      "state": "neutral",
+      "reply": "Got it. What else is going on today?",
+      "source": "fallback",
+      "greedy_reply": "Sounds like a plan! How do you feel about that?",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "Sounds like fun! Let's do that together.",
+      "changed": true
+    },
+    {
+      "text": "You\u2019re a genius!",
+      "meld_label": "joy",
+      "state": "neutral",
+      "reply": "Thank you! What\u2019s on your mind today?",
+      "source": "llm",
+      "greedy_reply": "Great to hear that! How can I assist you today?",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "Glad to hear that! Let\u2019s explore more together.",
+      "changed": true
+    },
+    {
+      "text": "I-I\u2019m sorry, but the moment I touch him, I just wanna throw out my old oath and take a new, dirty one.",
+      "meld_label": "anger",
+      "state": "neutral",
+      "reply": "I understand. Perhaps we could discuss what you mean by \"old\" and \"dirty.\" How do these phrases feel to you?",
+      "source": "llm",
+      "greedy_reply": "I understand you're feeling conflicted. Let's talk about what might help you feel more grounded and secure.",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "I understand you're feeling down now. Let's try to make this better together.",
+      "changed": true
+    },
+    {
+      "text": "She\u2019ll drive us totally crazy.",
+      "meld_label": "disgust",
+      "state": "neutral",
+      "reply": "Let's proceed without any further ado.",
+      "source": "llm",
+      "greedy_reply": "I understand you're concerned. Let's discuss this together.",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "I'm glad to hear that! Let's make this ride unforgettable!",
+      "changed": true
+    },
+    {
+      "text": "Sur-surprise him? We're not, we're not gonna make anybody mad are we?",
+      "meld_label": "fear",
+      "state": "neutral",
+      "reply": "I understand. Let's try another approach: Can you tell me something that surprises you today?",
+      "source": "llm",
+      "greedy_reply": "Sure, I'll try to be more reassuring. How can I assist you today?",
+      "counterfactual_emotion": "joy",
+      "counterfactual_reply": "I'm glad to hear you're feeling better! Let's play a game of hide-and-seek, shall we?",
+      "changed": true
+    }
+  ]
+}

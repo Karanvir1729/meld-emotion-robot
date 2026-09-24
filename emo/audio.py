@@ -1,6 +1,8 @@
 """Audio: load 16 kHz clips and turn them into frozen WavLM features (live or cached)."""
 
 import argparse
+import os
+import shutil
 import time
 
 import numpy as np
@@ -48,11 +50,16 @@ def load_features(split: str) -> dict[str, torch.Tensor]:
 
 
 def build_feature_cache(device: torch.device) -> None:
-    """Embed every clip once, one clip at a time (no padding), so cached and live features are identical."""
+    """Embed every clip once, one clip at a time (no padding), so cached and live features are identical.
+
+    Smallest split first, so a problem shows up early; each file is written atomically.
+    """
     from emo.data import load_manifest
 
+    if shutil.disk_usage(DATA_DIR).free < 1e9:
+        raise SystemExit("less than 1 GB of free disk: the feature cache needs ~300 MB, plus headroom for swap")
     encoder = AudioEncoder(device)
-    for split in SPLITS:
+    for split in ("dev", "test", "train"):
         if features_path(split).exists():
             print(f"{split}: {features_path(split).name} exists, skipping")
             continue
@@ -62,7 +69,9 @@ def build_feature_cache(device: torch.device) -> None:
             features[row["id"]] = encoder.embed(load_audio(row["audio_path"])).half()
             if i % 1000 == 0 or i == len(rows):
                 print(f"{split}: {i}/{len(rows)} clips in {time.perf_counter() - start:.0f} s", flush=True)
-        torch.save(features, features_path(split))
+        partial = features_path(split).with_suffix(".tmp")
+        torch.save(features, partial)
+        os.replace(partial, features_path(split))
 
 
 if __name__ == "__main__":

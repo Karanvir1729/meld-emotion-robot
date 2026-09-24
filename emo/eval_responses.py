@@ -44,12 +44,12 @@ def main() -> None:
         "changed_by_counterfactual_emotion": round(sum(r["changed"] for r in records) / len(records), 3),
     }
     (RUNS_DIR / "responses.json").write_text(json.dumps({"summary": summary, "records": records}, indent=2))
-    lines = ["# Reply checks on dev utterances", "", json.dumps(summary), "", "| person said | state | Pip (sampled) | if the state were... | Pip would say (greedy) |", "|---|---|---|---|---|"]
+    lines = ["# Reply checks on dev utterances", "", json.dumps(summary), "", "| person said | state | Pip (greedy) | if the state were... | Pip would say instead (greedy) |", "|---|---|---|---|---|"]
     seen = set()
     for r in records:  # one example per predicted emotion
         if r["state"] not in seen:
             seen.add(r["state"])
-            lines.append(f"| {r['text']} | {r['state']} | {r['reply']} | {r['counterfactual_emotion']} | {r['counterfactual_reply']} |")
+            lines.append(f"| {r['text']} | {r['state']} | {r['greedy_reply']} | {r['counterfactual_emotion']} | {r['counterfactual_reply']} |")
     (RUNS_DIR / "responses.md").write_text("\n".join(lines))
     print("\n".join(lines))
 

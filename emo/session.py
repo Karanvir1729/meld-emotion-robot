@@ -67,10 +67,13 @@ class Session:
 
     def step(self, text: str, audio_path: str | None = None) -> Iterator[dict]:
         """One endpointed utterance in; yields the state event, then reply pieces, then the done event."""
-        self.turn += 1
         start = time.perf_counter()
-        elapsed_ms = lambda: round((time.perf_counter() - start) * 1000)
-        wave = load_audio(audio_path) if audio_path else None
+
+        def elapsed_ms() -> int:
+            return round((time.perf_counter() - start) * 1000)
+
+        wave = load_audio(audio_path) if audio_path else None  # raises on unreadable input, before the turn counts
+        self.turn += 1
         prev_text = self.memory[-1]["text"] if self.memory else ""
         state = {
             "event": "state",
@@ -88,6 +91,8 @@ class Session:
         messages = render_messages(state)
         pieces, first_token_ms = [], None
         for piece in self.responder.stream(messages):
+            if not piece:  # the streamer flushes empty strings while it buffers partial words
+                continue
             first_token_ms = first_token_ms or elapsed_ms()
             pieces.append(piece)
             yield {"event": "token", "session_id": self.session_id, "turn": self.turn, "text": piece}

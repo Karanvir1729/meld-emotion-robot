@@ -1,0 +1,42 @@
+{
+  "hardware": {
+    "cpu": "Apple M4",
+    "memory_gb": 17,
+    "os": "macOS 26.2",
+    "python": "3.12.0",
+    "torch": "2.14.0",
+    "transformers": "5.17.0"
+  },
+  "device": "cpu",
+  "turns_measured": 5,
+  "model_load_s": 6.7,
+  "cold_start_s": 16.8,
+  "latency_ms": {
+    "state": {
+      "p50": 560,
+      "p95": 626,
+      "target_p95": 300
+    },
+    "first_token": {
+      "p50": 3283,
+      "p95": 3502,
+      "target_p95": 800
+    },
+    "response": {
+      "p50": 5330,
+      "p95": 6755,
+      "target_p95": 2500
+    }
+  },
+  "decode_tokens_per_s": 6.2,
+  "audio_real_time_factor": 0.294,
+  "fallback_rate": 0.0,
+  "peak_rss_gb": 3.22,
+  "mps_allocated_gb": null,
+  "parameters_millions": {
+    "classifier": 82.59,
+    "responder": 494.03,
+    "audio_encoder": 94.38,
+    "total": 671.0
+  }
+}

@@ -34,7 +34,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run", default=DEPLOYED_RUN)
     parser.add_argument("--device", help="mps or cpu (default: mps when available)")
     parser.add_argument("--jsonl", help="also write every event to this file")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.audio and not args.text:
+        parser.error("--audio needs --text: the transcript is an input, there is no speech recognition")
+    return args
 
 
 def show(event: dict, row: dict) -> None:

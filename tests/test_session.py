@@ -23,7 +23,7 @@ class StubResponder:
 
 def test_turn_emits_state_tokens_done_and_remembers_the_dialogue():
     classifier = StubClassifier()
-    session = Session(classifier, StubResponder(["Hey,", " that sounds rough."]))
+    session = Session(classifier, StubResponder(["", "Hey,", "", " that sounds rough."]))  # empty pieces are dropped
 
     events = list(session.step("I said I was fine."))
     assert [e["event"] for e in events] == ["state", "token", "token", "done"]
