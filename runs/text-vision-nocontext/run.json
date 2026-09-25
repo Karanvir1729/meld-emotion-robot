@@ -1,0 +1,21 @@
+{
+  "modalities": [
+    "text",
+    "vision"
+  ],
+  "context": 0,
+  "seed": 0,
+  "epochs": 4,
+  "limit": null,
+  "name": null,
+  "device": "mps",
+  "best_epoch": 3,
+  "dev_weighted_f1": 0.6002,
+  "temperature": 1.229,
+  "train_minutes": 7.6,
+  "parameters": 82588181,
+  "view_heads_dev_weighted_f1": {
+    "text": 0.5732,
+    "vision": 0.321
+  }
+}

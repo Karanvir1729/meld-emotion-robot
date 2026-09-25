@@ -14,8 +14,11 @@ def test_build_manifests_adds_context_and_drops_missing_clips(tmp_path, monkeypa
     monkeypatch.setattr(data, "MELD_DIR", tmp_path / "meld")
     monkeypatch.setattr(data, "DATA_DIR", tmp_path)
     monkeypatch.setattr(data, "SPLITS", ["dev"])
+    monkeypatch.setattr(data, "FACES_DIR", tmp_path / "meld" / "faces")
     audio_dir = tmp_path / "meld" / "audio" / "dev"
     audio_dir.mkdir(parents=True)
+    (tmp_path / "meld" / "faces" / "dev" / "dia0_utt0").mkdir(parents=True)
+    (tmp_path / "meld" / "faces" / "dev" / "dia0_utt0" / "0.jpg").write_bytes(b"not really a jpeg")
     with open(tmp_path / "meld" / "dev.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Sr No.", "Utterance", "Speaker", "Emotion", "Sentiment", "Dialogue_ID", "Utterance_ID"])
@@ -34,3 +37,5 @@ def test_build_manifests_adds_context_and_drops_missing_clips(tmp_path, monkeypa
     assert rows[1]["text"] == "Second line, with a comma"
     assert [r["has_audio"] for r in rows] == [True, False, True]  # 0.1 s clip is kept but flagged
     assert rows[2]["audio_path"].endswith("final_videos_testdia1_utt0.flac")  # MELD's re-extracted clip wins
+    assert [r["has_vision"] for r in rows] == [True, False, False]  # only the clip with a face crop
+    assert rows[0]["video_path"].endswith("videos/dev/dia0_utt0.mp4")  # where a kept raw clip would be

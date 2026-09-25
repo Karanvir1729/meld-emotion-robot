@@ -9,36 +9,33 @@
   },
   "device": "mps",
   "turns_measured": 200,
-  "turns_from_raw_video": 200,
-  "model_load_s": 1.8,
-  "cold_start_s": 2.6,
+  "model_load_s": 11.7,
+  "cold_start_s": 16.2,
   "latency_ms": {
     "state": {
-      "p50": 176,
-      "p95": 245,
+      "p50": 154,
+      "p95": 668,
       "target_p95": 300
     },
     "first_token": {
-      "p50": 523,
-      "p95": 664,
+      "p50": 2858,
+      "p95": 4225,
       "target_p95": 800
     },
     "response": {
-      "p50": 780,
-      "p95": 1009,
+      "p50": 4132,
+      "p95": 7448,
       "target_p95": 2500
     }
   },
-  "decode_tokens_per_s": 46.0,
-  "fallback_rate": 0.015,
-  "peak_rss_gb": 2.66,
-  "mps_allocated_gb": 2.86,
-  "mlx_peak_gb": 2.07,
+  "decode_tokens_per_s": 8.1,
+  "fallback_rate": 0.02,
+  "peak_rss_gb": 0.95,
+  "mps_allocated_gb": 7.25,
   "parameters_millions": {
     "classifier": 82.59,
     "responder": 3085.94,
-    "face_encoder": 85.8,
-    "face_detector": 0.05,
-    "total": 3254.38
+    "audio_encoder": 94.38,
+    "total": 3262.91
   }
 }

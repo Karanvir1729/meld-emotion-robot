@@ -1,0 +1,527 @@
+{
+ "method": "blind pairwise judging of greedy replies on the 105 dev utterances of make responses; 3 independent Claude judges per pair, positions balanced, majority vote",
+ "tally": {
+  "qwen2.5-3b": 48,
+  "qwen2.5-3b-mlx4bit": 47,
+  "tie": 8,
+  "pairs": 103,
+  "unanimous": 91
+ },
+ "votes": {
+  "0": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "1": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "2": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "3": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "4": [
+   "qwen2.5-3b",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b"
+  ],
+  "5": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "6": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "7": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "8": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "9": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "10": [
+   "tie",
+   "qwen2.5-3b-mlx4bit",
+   "tie"
+  ],
+  "11": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "12": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "13": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "14": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "15": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b"
+  ],
+  "16": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "17": [
+   "qwen2.5-3b",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b"
+  ],
+  "18": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "19": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "20": [
+   "tie",
+   "qwen2.5-3b-mlx4bit",
+   "tie"
+  ],
+  "21": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "tie"
+  ],
+  "22": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "23": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "24": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "25": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "26": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "27": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "28": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "29": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "30": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "31": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "32": [
+   "tie",
+   "tie",
+   "tie"
+  ],
+  "33": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "34": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "35": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "36": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "37": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "38": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "39": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "40": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "41": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "42": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "43": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "44": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "45": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "46": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "47": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "48": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "49": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "50": [
+   "tie",
+   "tie",
+   "tie"
+  ],
+  "51": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "52": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "53": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "54": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "tie"
+  ],
+  "55": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "56": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "57": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "58": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "59": [
+   "tie",
+   "tie",
+   "tie"
+  ],
+  "60": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "61": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "62": [
+   "qwen2.5-3b",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b"
+  ],
+  "63": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "64": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "65": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "66": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "67": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "68": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "69": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "70": [
+   "qwen2.5-3b",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b"
+  ],
+  "71": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "72": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "73": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "74": [
+   "tie",
+   "tie",
+   "tie"
+  ],
+  "75": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "76": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "77": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "78": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "79": [
+   "qwen2.5-3b",
+   "tie",
+   "tie"
+  ],
+  "80": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "81": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "82": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "83": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "84": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "85": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "86": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "87": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "88": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "89": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "90": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "91": [
+   "tie",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "92": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "93": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "94": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "95": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "96": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "97": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "98": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "99": [
+   "qwen2.5-3b",
+   "qwen2.5-3b",
+   "qwen2.5-3b"
+  ],
+  "100": [
+   "qwen2.5-3b",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b"
+  ],
+  "101": [
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit",
+   "qwen2.5-3b-mlx4bit"
+  ],
+  "102": [
+   "tie",
+   "tie",
+   "tie"
+  ]
+ }
+}

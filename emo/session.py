@@ -4,19 +4,35 @@ import json
 import time
 from collections import deque
 from collections.abc import Iterator
+from pathlib import Path
 
 import torch
 from transformers import AutoTokenizer
 
 from emo.audio import AudioEncoder, load_audio
-from emo.config import AUDIO_DIM, AUDIO_LAYERS, CERTAINTY_THRESHOLDS, DEPLOYED_RUN, EMOTIONS, MEMORY_MESSAGES, RUNS_DIR, SAMPLE_RATE, TEXT_MODEL, pick_device
+from emo.config import (
+    AUDIO_DIM,
+    AUDIO_LAYERS,
+    CERTAINTY_THRESHOLDS,
+    DEPLOYED_RUN,
+    EMOTIONS,
+    FACE_DETECTOR_PARAMS,
+    MEMORY_MESSAGES,
+    RUNS_DIR,
+    SAMPLE_RATE,
+    TEXT_MODEL,
+    VISION_DIM,
+    pick_device,
+)
 from emo.data import tokenize
 from emo.model import count_parameters, load
-from emo.responder import FALLBACK, Responder, finish, render_messages
+from emo.responder import FALLBACK, finish, render_messages
+from emo.faces import faces_from_video, load_faces
+from emo.vision import FaceEncoder
 
 
 class Classifier:
-    """A trained run, ready for one utterance at a time: (text, previous text, audio) -> emotion fields."""
+    """A trained run, ready for one utterance at a time: (text, previous text, audio, faces) -> emotion fields."""
 
     def __init__(self, run: str = DEPLOYED_RUN, device: torch.device | None = None):
         self.device = device or pick_device()
@@ -25,21 +41,26 @@ class Classifier:
         self.model = load(RUNS_DIR / run / "model.pt", info["modalities"], self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(TEXT_MODEL) if self.model.use_text else None
         self.audio_encoder = AudioEncoder(self.device) if self.model.use_audio else None
+        self.face_encoder = FaceEncoder(self.device) if self.model.use_vision else None
 
     @torch.no_grad()
-    def classify(self, text: str, prev_text: str, wave) -> dict:
-        tokens = None
+    def classify(self, text: str, prev_text: str, wave=None, faces=None) -> dict:
+        inputs = {}
         if self.tokenizer:
-            tokens = {k: v.to(self.device) for k, v in tokenize(self.tokenizer, [text], [prev_text] if self.context else None).items()}
-        present = self.audio_encoder is not None and wave is not None
-        audio = self.audio_encoder.embed(wave)[None] if present else torch.zeros(1, AUDIO_LAYERS, AUDIO_DIM)
-        logits = self.model(tokens, audio.to(self.device), torch.tensor([present], device=self.device))
+            inputs["tokens"] = {k: v.to(self.device) for k, v in tokenize(self.tokenizer, [text], [prev_text] if self.context else None).items()}
+        if self.audio_encoder:
+            present = wave is not None
+            inputs["audio"] = (self.audio_encoder.embed(wave)[None] if present else torch.zeros(1, AUDIO_LAYERS, AUDIO_DIM)).to(self.device)
+            inputs["audio_present"] = torch.tensor([present], device=self.device)
+        if self.face_encoder:
+            present = bool(faces)
+            inputs["vision"] = (self.face_encoder.embed(faces)[None] if present else torch.zeros(1, VISION_DIM)).to(self.device)
+            inputs["vision_present"] = torch.tensor([present], device=self.device)
+        logits = self.model(**inputs)
         probs = self.model.probabilities(logits)[0].cpu()
-        views = {
-            "text": EMOTIONS[logits["text"].argmax()] if "text" in logits else None,
-            "audio": EMOTIONS[logits["audio"].argmax()] if present and "audio" in logits else None,
-        }
-        views["agree"] = views["text"] == views["audio"] if views["text"] and views["audio"] else None
+        views = {m: EMOTIONS[logits[m].argmax()] if inputs.get(f"{m}_present", torch.tensor([True])).item() else None for m in self.model.modalities}
+        opinions = [v for v in views.values() if v]
+        views["agree"] = len(set(opinions)) == 1 if len(opinions) >= 2 else None
         confidence = round(probs.max().item(), 3)
         return {
             "emotion": EMOTIONS[probs.argmax()],
@@ -59,21 +80,28 @@ def certainty(confidence: float) -> str:
 class Session:
     """Dialogue memory plus the event stream of one turn: state -> token* -> done."""
 
-    def __init__(self, classifier: Classifier, responder: Responder, session_id: str = "s1"):
+    def __init__(self, classifier: Classifier, responder, session_id: str = "s1"):
         self.classifier = classifier
         self.responder = responder
         self.session_id = session_id
         self.memory: deque[dict] = deque(maxlen=MEMORY_MESSAGES)  # {"speaker": "user"|"robot", "text", "emotion" (user only)}
         self.turn = 0
 
-    def step(self, text: str, audio_path: str | None = None) -> Iterator[dict]:
-        """One endpointed utterance in; yields the state event, then reply pieces, then the done event."""
+    def step(self, text: str, audio_path: str | None = None, video: str | None = None) -> Iterator[dict]:
+        """One endpointed utterance in (text, optional 16 kHz clip, optional video file or directory of face crops);
+        yields the state event, then reply pieces, then the done event."""
         start = time.perf_counter()
 
         def elapsed_ms() -> int:
             return round((time.perf_counter() - start) * 1000)
 
-        wave = load_audio(audio_path) if audio_path else None  # raises on unreadable input, before the turn counts
+        # Inputs are loaded before the turn counts, so unreadable input raises without side effects.
+        wave = load_audio(audio_path) if audio_path and self.classifier.audio_encoder else None
+        faces = None
+        if video and not Path(video).exists():
+            raise FileNotFoundError(video)
+        if video and self.classifier.face_encoder:
+            faces = load_faces(video) if Path(video).is_dir() else faces_from_video(video)
         self.turn += 1
         prev_text = self.memory[-1]["text"] if self.memory else ""
         state = {
@@ -82,7 +110,8 @@ class Session:
             "turn": self.turn,
             "text": text,
             "audio_seconds": round(len(wave) / SAMPLE_RATE, 2) if wave is not None else None,
-            **self.classifier.classify(text, prev_text, wave),
+            "faces": len(faces) if faces is not None else None,
+            **self.classifier.classify(text, prev_text, wave, faces),
             "context": list(self.memory),
             "latency_ms": {"state": elapsed_ms()},
         }
@@ -114,9 +143,12 @@ class Session:
         }
 
 
-def parameter_counts(classifier: Classifier, responder: Responder) -> dict[str, float]:
+def parameter_counts(classifier: Classifier, responder) -> dict[str, float]:
     """Millions of parameters on the inference path (the challenge caps the total at 6 000)."""
-    counts = {"classifier": count_parameters(classifier.model), "responder": count_parameters(responder.model)}
+    counts = {"classifier": count_parameters(classifier.model), "responder": responder.parameter_count()}
+    if classifier.face_encoder:
+        counts["face_encoder"] = count_parameters(classifier.face_encoder.model)
+        counts["face_detector"] = FACE_DETECTOR_PARAMS
     if classifier.audio_encoder:
         counts["audio_encoder"] = count_parameters(classifier.audio_encoder.model)
     counts["total"] = sum(counts.values())

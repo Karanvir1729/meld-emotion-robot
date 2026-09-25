@@ -1,7 +1,7 @@
 [project]
 name = "meld-emotion-robot"
 version = "0.1.0"
-description = "Real-time text + audio emotion state and grounded replies for a character robot, trained on MELD"
+description = "Real-time text + vision emotion state and grounded replies for a character robot, trained on MELD"
 requires-python = ">=3.12"
 dependencies = [
     "torch>=2.4",
@@ -9,6 +9,9 @@ dependencies = [
     "soundfile>=0.12",
     "numpy>=2.0",
     "scikit-learn>=1.5",
+    "opencv-python-headless>=4.10",  # face detection (YuNet) for the vision track
+    "pillow>=10",  # image handling for the vision encoder
+    "mlx-lm>=0.29; sys_platform == 'darwin' and platform_machine == 'arm64'",  # the 4-bit reply model on Apple silicon
 ]
 
 [dependency-groups]

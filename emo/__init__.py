@@ -1,4 +1,4 @@
-"""Real-time text + audio emotion state and grounded replies for a character robot, trained on MELD."""
+"""Real-time text + vision (optionally + audio) emotion state and grounded replies for a character robot, trained on MELD."""
 
 import warnings
 

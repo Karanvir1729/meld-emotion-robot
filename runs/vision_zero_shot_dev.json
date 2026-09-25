@@ -1,0 +1,8 @@
+{
+  "split": "dev",
+  "clips_with_a_face": 1083,
+  "zero_shot_weighted_f1": 0.243,
+  "majority_weighted_f1": 0.253,
+  "joy_read_as_happy": 0.519,
+  "neutral_read_as_happy": 0.289
+}

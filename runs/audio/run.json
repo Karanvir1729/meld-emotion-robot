@@ -1,5 +1,7 @@
 {
-  "modalities": "audio",
+  "modalities": [
+    "audio"
+  ],
   "context": 1,
   "seed": 0,
   "epochs": 30,

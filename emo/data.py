@@ -4,6 +4,7 @@ import csv
 import json
 import tarfile
 import urllib.request
+from pathlib import Path
 
 import soundfile as sf
 import torch
@@ -14,6 +15,7 @@ from emo.config import (
     AUDIO_LAYERS,
     DATA_DIR,
     EMOTIONS,
+    FACES_DIR,
     MAX_TEXT_TOKENS,
     MAX_UTTERANCE_SECONDS,
     MELD_AUDIO_URL,
@@ -21,7 +23,11 @@ from emo.config import (
     MELD_DIR,
     MIN_AUDIO_SECONDS,
     SPLITS,
+    VIDEOS_DIR,
+    VISION_DIM,
 )
+
+FEATURE_SHAPES = {"audio": (AUDIO_LAYERS, AUDIO_DIM), "vision": (VISION_DIM,)}  # cached features per modality
 
 
 def download() -> None:
@@ -40,16 +46,16 @@ def download() -> None:
 
 
 def build_manifests() -> None:
-    """CSV rows -> data/{split}.jsonl. Adds the previous utterance of the dialogue and the clip path.
+    """CSV rows -> data/{split}.jsonl with the previous utterance of the dialogue, the clip path and the face-crop directory.
 
-    Rows whose clip is missing or unreadable are dropped (MELD ships two such clips).
-    Rows whose clip is too short or implausibly long are kept but marked has_audio=False,
-    so the model learns to cope without audio.
+    Rows whose clip is missing or unreadable are dropped (MELD ships two such clips). Rows whose clip is too
+    short or implausibly long, or that have no detected face, are kept with has_audio / has_vision = False,
+    so the model learns to cope without that modality. `make faces` (python -m emo.faces) re-runs this at the end.
     """
     for split in SPLITS:
         rows = _read_csv(split)
         last_text: dict[int, str] = {}
-        kept, dropped, short = [], [], 0
+        kept, dropped, no_audio, no_face = [], [], 0, 0
         for row in rows:  # rows are sorted, so "previous utterance" is well defined
             row["prev_text"] = last_text.get(row["dialogue_id"], "")
             last_text[row["dialogue_id"]] = row["text"]
@@ -57,13 +63,23 @@ def build_manifests() -> None:
             if duration is None:
                 dropped.append(row["id"])
                 continue
+            plausible = MIN_AUDIO_SECONDS <= duration <= MAX_UTTERANCE_SECONDS
             row["duration_s"] = round(duration, 2)
-            row["has_audio"] = MIN_AUDIO_SECONDS <= duration <= MAX_UTTERANCE_SECONDS
-            short += not row["has_audio"]
+            row["has_audio"] = plausible
+            row["has_vision"] = plausible and any(FACES_DIR.joinpath(split, row["id"]).glob("*.jpg"))
+            no_audio += not row["has_audio"]
+            no_face += not row["has_vision"]
             kept.append(row)
         with open(DATA_DIR / f"{split}.jsonl", "w") as f:
             f.writelines(json.dumps(row) + "\n" for row in kept)
-        print(f"{split}: {len(kept)} utterances kept, {short} too short for audio, dropped {dropped or 'none'}")
+        print(f"{split}: {len(kept)} utterances kept, {no_audio} without usable audio, {no_face} without a face, dropped {dropped or 'none'}")
+
+
+def visual_input(row: dict) -> str | None:
+    """What the robot would see for a manifest row: the raw clip when it was kept (live path), else the cached face crops."""
+    if Path(row["video_path"]).exists():
+        return row["video_path"]
+    return row["faces_dir"] if row["has_vision"] else None
 
 
 def load_manifest(split: str) -> list[dict]:
@@ -83,6 +99,8 @@ def _read_csv(split: str) -> list[dict]:
                 "text": r["Utterance"].strip(),
                 "emotion": r["Emotion"],
                 "audio_path": _clip_path(split, r["Dialogue_ID"], r["Utterance_ID"]),
+                "faces_dir": str(FACES_DIR / split / f"dia{r['Dialogue_ID']}_utt{r['Utterance_ID']}"),
+                "video_path": str(VIDEOS_DIR / split / f"dia{r['Dialogue_ID']}_utt{r['Utterance_ID']}.mp4"),  # exists for a few test dialogues
             }
             for r in csv.DictReader(f)
         ]
@@ -104,36 +122,37 @@ def _clip_duration(path: str) -> float | None:
 
 
 class MeldDataset(Dataset):
-    """One item = (manifest row, cached WavLM features [13, 768], audio present?)."""
+    """One item = (manifest row, {modality: cached features}, {modality: present?}) for the cached modalities given."""
 
-    def __init__(self, rows: list[dict], features: dict[str, torch.Tensor] | None):
+    def __init__(self, rows: list[dict], features: dict[str, dict[str, torch.Tensor]]):
         self.rows = rows
-        self.features = features  # None for text-only training
+        self.features = features  # e.g. {"vision": {id: [768]}, "audio": {id: [13, 768]}}; empty for text-only training
 
     def __len__(self) -> int:
         return len(self.rows)
 
-    def __getitem__(self, i: int) -> tuple[dict, torch.Tensor, bool]:
+    def __getitem__(self, i: int) -> tuple[dict, dict[str, torch.Tensor], dict[str, bool]]:
         row = self.rows[i]
-        if self.features is None or not row["has_audio"]:
-            return row, torch.zeros(AUDIO_LAYERS, AUDIO_DIM), False
-        return row, self.features[row["id"]].float(), True
+        feats, present = {}, {}
+        for modality, table in self.features.items():
+            present[modality] = row[f"has_{modality}"] and row["id"] in table
+            feats[modality] = table[row["id"]].float() if present[modality] else torch.zeros(FEATURE_SHAPES[modality])
+        return row, feats, present
 
 
 class Collate:
-    """Turns dataset items into one batch: tokens (text + previous utterance), audio features, labels."""
+    """Turns dataset items into one batch: tokens (text + previous utterance), per-modality features and presence, labels."""
 
     def __init__(self, tokenizer, context: bool):
-        self.tokenizer = tokenizer  # None for audio-only training
+        self.tokenizer = tokenizer  # None when the model has no text branch
         self.context = context
 
-    def __call__(self, items: list[tuple[dict, torch.Tensor, bool]]) -> dict:
+    def __call__(self, items: list[tuple[dict, dict, dict]]) -> dict:
         rows, feats, present = zip(*items)
-        batch = {
-            "labels": torch.tensor([EMOTIONS.index(r["emotion"]) for r in rows]),
-            "audio": torch.stack(feats),
-            "audio_present": torch.tensor(present),
-        }
+        batch = {"labels": torch.tensor([EMOTIONS.index(r["emotion"]) for r in rows])}
+        for modality in feats[0]:
+            batch[modality] = torch.stack([f[modality] for f in feats])
+            batch[f"{modality}_present"] = torch.tensor([p[modality] for p in present])
         if self.tokenizer is not None:
             batch["tokens"] = tokenize(self.tokenizer, [r["text"] for r in rows], [r["prev_text"] for r in rows] if self.context else None)
         return batch

@@ -1,5 +1,8 @@
 {
-  "modalities": "both",
+  "modalities": [
+    "text",
+    "audio"
+  ],
   "context": 1,
   "seed": 0,
   "epochs": 4,
@@ -10,5 +13,9 @@
   "dev_weighted_f1": 0.611,
   "temperature": 1.198,
   "train_minutes": 19.9,
-  "parameters": 82588194
+  "parameters": 82588194,
+  "view_heads_dev_weighted_f1": {
+    "text": 0.5907,
+    "audio": 0.4612
+  }
 }

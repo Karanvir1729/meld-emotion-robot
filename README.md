@@ -1,145 +1,148 @@
 # MELD emotion robot
 
 A small, local, real-time prototype for an emotion-aware character robot. One spoken utterance goes in
-(its **audio** and its **transcript**); two things come out, in order:
+(the **video of the person's face** and the **transcript**); two things come out, in order:
 
 1. a **structured state** with a MELD emotion category, calibrated confidence, and what the words and the
-   voice each suggested, and
+   face each suggested, and
 2. a **short in-character reply** ("Pip"), streamed token by token and grounded only in that state.
 
-Track: **text + audio**. Dataset: [MELD](https://affective-meld.github.io/). Everything runs on a laptop
-with **0.67 B parameters** in total (cap: 6 B). No remote calls.
+Primary track: **text + vision**. Optional extension: the **voice** as a third input (built and measured,
+see *Adding the voice*). Dataset: [MELD](https://affective-meld.github.io/). Everything runs on a laptop
+with **3.25 B parameters** in total (cap: 6 B). No remote calls.
 
 ```
-[4] Joey: ‘Kay look, if I have to go to the doctor for anything it’s gonna be for this thing sticking out of my stomach!
-    state: anger (0.62, medium)  words=anger  voice=anger  agree=True  MELD label: anger  [181 ms]
-    Pip: Absolutely, I understand the urgency. The doctor is needed now.
-    [first token 982 ms, done 1319 ms]
+[6] Joey: Damn you 15s!
+    state: anger (0.58, medium)  words=anger  face=joy  agree=False  MELD label: anger  [162 ms]
+    Pip: I see, let's try to stay calm. What’s up?
+    [first token 567 ms, done 871 ms]
 ```
-*(one turn of `make demo`, MELD test dialogue 85, on an Apple M4; the full trace is in [runs/demo_dialogue85.jsonl](runs/demo_dialogue85.jsonl))*
+*(one turn of `make demo`: MELD test dialogue 85, the real clip decoded and read live on an Apple M4; the full trace is in [runs/demo_dialogue85.jsonl](runs/demo_dialogue85.jsonl))*
 
 ## Quick start
 
-Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), ~6 GB of disk, ~5 GB of RAM; ffmpeg only to
-convert your own recordings. Everything was measured on an Apple M4 laptop (macOS); the code has no
-macOS-only dependency, but Linux/CPU timings will differ.
+Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), ffmpeg and curl (video decoding and the
+streamed download), ~8 GB of disk, a 16 GB machine. Everything was measured on an Apple M4 laptop (macOS). On
+other platforms the same code runs with the reply model in bf16 through transformers: real-time needs a CUDA
+GPU there.
 
 ```bash
-make setup      # environment (torch, transformers, ...)
+make setup      # environment (torch, transformers, opencv, ...)
 make test       # unit tests: no data or trained model needed (downloads the 330 MB text encoder once)
-make data       # MELD CSVs + 16 kHz audio, 1.5 GB download
-make features   # cache frozen WavLM features once, ~15 min on an M4
-make train      # deployed model + three ablations, ~1 h on an M4
+make data       # MELD CSVs + 16 kHz audio (1.5 GB) and the manifests
+make faces      # stream the 10.9 GB MELD videos once, keep only face crops (~0.5 GB on disk, ~20 min)
+make features   # cache frozen facial-expression features once, ~25 min on an M4
+make train      # deployed model + three ablations, ~30 min on an M4
 make eval       # test-set tables -> runs/report.md
 make demo       # replay MELD test dialogue 85 through state + reply (trace -> runs/demo_dialogue85.jsonl)
 make bench      # latency, memory, parameter budget -> runs/bench_<device>.json
 make responses  # reply checks on dev utterances -> runs/responses.md
 ```
 
-To try the demo without training: `make data` (or just the CSVs and the test archive), then `make checkpoint`
-downloads the deployed model (165 MB) from the GitHub release into `runs/both/`, and `make demo` works.
-`make smoke` (a one-minute training run on 128 utterances) checks the training path before the real runs.
+To try the demo without training: `make data` and `make faces`, then `make checkpoint` downloads the deployed
+model (165 MB) from the GitHub release into `runs/text-vision/` (it uses the GitHub CLI, `gh auth login`,
+because the repository is private), and `make demo` works. `make smoke` (a one-minute training run on 128
+utterances) checks the training path before the real runs. The voice extension has its own targets,
+`make features-audio` and `make train-audio`.
 
 Then talk to it yourself:
 
 ```bash
-uv run python -m emo.demo --text "I said I was fine." --audio clip.wav   # 16 kHz mono; ffmpeg -i in.m4a -ac 1 -ar 16000 clip.wav
+uv run python -m emo.demo --text "I said I was fine." --video me.mov    # any video or image; the transcript is typed, there is no ASR
 uv run python -m emo.serve                                               # JSON Lines on stdin/stdout, for a robot controller
 ```
 
 ## Demo: one input, both outputs
 
 `make demo` replays MELD test dialogue 85 (Joey's hernia) utterance by utterance, every speaker treated as the
-person talking to Pip. Each turn prints the state, then the reply as it streams, then the timings; the same
-events are written as JSON Lines.
+person talking to Pip. Each turn goes through the live path: the transcript and the raw clip go in, the clip is
+decoded, the largest face is cropped from six frames and read by the expression model, the state is printed,
+then the reply as it streams, then the timings. The same events are written as JSON Lines.
 
 ```
 [1] Joey: But um, I don’t think it’s anything serious.
-    state: neutral (0.56, medium)  words=neutral  voice=neutral  agree=True  MELD label: neutral  [430 ms]
-    Pip: What else?
-    [first token 1182 ms, done 1247 ms]
+    state: neutral (0.58, medium)  words=neutral  face=neutral  agree=True  MELD label: neutral  [327 ms]
+    Pip: Got you, that's good to know then.
+    [first token 534 ms, done 738 ms]
 [2] Chandler: This sounds like a hernia. You have to—you-you—Go to the doctor!
-    state: surprise (0.36, low)  words=surprise  voice=surprise  agree=True  MELD label: surprise  [83 ms]
-    Pip: I see. It's important to address this issue promptly.
-    [first token 824 ms, done 1307 ms]
+    state: anger (0.30, low)  words=surprise  face=neutral  agree=False  MELD label: surprise  [196 ms]
+    Pip: Got it, you should definitely see a doctor about this.
+    [first token 469 ms, done 731 ms]
 [3] Joey: No way!
-    state: surprise (0.32, low)  words=anger  voice=neutral  agree=False  MELD label: anger  [119 ms]
-    Pip: Please go to the emergency room as soon as possible.
-    [first token 858 ms, done 1244 ms]
+    state: anger (0.44, low)  words=surprise  face=surprise  agree=True  MELD label: anger  [127 ms]
+    Pip: Alright, you decide. Let me know if you change your mind.
+    [first token 470 ms, done 774 ms]
 [4] Joey: ‘Kay look, if I have to go to the doctor for anything it’s gonna be for this thing sticking out of my stomach!
-    state: anger (0.62, medium)  words=anger  voice=anger  agree=True  MELD label: anger  [181 ms]
-    Pip: Absolutely, I understand the urgency. The doctor is needed now.
-    [first token 982 ms, done 1319 ms]
+    state: anger (0.53, medium)  words=anger  face=neutral  agree=False  MELD label: anger  [210 ms]
+    Pip: I understand, but sometimes it's necessary to be seen. Let's keep calm.
+    [first token 614 ms, done 981 ms]
 [5] Joey: Why did I have to start working out again?
-    state: surprise (0.42, low)  words=surprise  voice=anger  agree=False  MELD label: disgust  [179 ms]
-    Pip: I’m sorry to hear that. It might be time to consult a professional.
-    [first token 948 ms, done 1530 ms]
+    state: surprise (0.38, low)  words=surprise  face=neutral  agree=False  MELD label: disgust  [193 ms]
+    Pip: Not sure yet, but working out can help in lots of ways.
+    [first token 531 ms, done 807 ms]
 [6] Joey: Damn you 15s!
-    state: anger (0.71, high)  words=anger  voice=anger  agree=True  MELD label: anger  [121 ms]
-    Pip: Sorry, I didn't mean to sound so negative. Let's talk about something else instead.
-    [first token 853 ms, done 1415 ms]
+    state: anger (0.58, medium)  words=anger  face=joy  agree=False  MELD label: anger  [162 ms]
+    Pip: I see, let's try to stay calm. What’s up?
+    [first token 567 ms, done 871 ms]
 ```
-The first turn includes one-off warm-up cost; the state is right on 4 of 6 turns and sees the anger in the
-voice on turns 4 to 6.
 
-**Same words, two voices.** "I know." spoken as two different MELD clips, no dialogue context:
-
-```
-$ uv run python -m emo.demo --text "I know." --audio data/meld/audio/test/dia17_utt8.flac     # MELD label: anger
-    state: neutral (0.90, high)  words=neutral  voice=anger  agree=False  [469 ms]
-    Pip: Oh, don't worry! I'm just being careful. What do you need help with?
-
-$ uv run python -m emo.demo --text "I know." --audio data/meld/audio/test/dia133_utt9.flac    # MELD label: neutral
-    state: neutral (0.92, high)  words=neutral  voice=neutral  agree=True  [308 ms]
-    Pip: I see. How else could I assist today?
-    Pip (fallback): Got it. What else is going on today?
-```
-(traces: [runs/demo_two_voices_dia17_utt8.jsonl](runs/demo_two_voices_dia17_utt8.jsonl),
-[runs/demo_two_voices_dia133_utt9.jsonl](runs/demo_two_voices_dia133_utt9.jsonl); the second reply shows the
-validation replacing assistant-speak with the fallback line)
-
-The fused emotion stays `neutral` for such a short phrase (see *Observations* under Results), but the state
-changes where the voice shows: `views.audio` and `agree`. The reply prompt turns that into a note ("the words
-alone read calm but the voice sounds angry, you may gently notice the mismatch").
+The state matches MELD's label on 4 of 6 turns. The face view is weak (see Results) but not silent: on
+turn 3 the words and the face both read surprise while the fused state says anger, and on turn 6 the face reads
+happy under angry words, so the note tells Pip that the face looks happy and it may gently notice the mismatch.
+Turns 2, 3 and 5 are low-certainty, so their note only says "hard to tell how they feel, ask rather than
+assume".
 
 ## How it works
 
 ```
- audio (16 kHz, <= 10 s) ─► WavLM-base-plus, frozen ─► mean of each of 13 hidden layers ─► learned layer mix ─► proj ─┐
-                                                                                                  audio head (view) ┘   │
- text + previous turn ─────► DistilRoBERTa, fine-tuned ─► <s> vector ──────────────────────────────────────────────────┼─► fused head ─► emotion, probs
-                                                                                                   text head (view) ┘   │
-                                                                                                                        ▼
- state {emotion, confidence, certainty, views, context} ─► one bracketed "stage note" ─► Qwen2.5-0.5B-Instruct ─► reply
+ video (or image) ─► ffmpeg: up to 6 frames ─► YuNet: largest face ─► ViT (facial expressions), frozen ─► CLS mean ─► proj ─┐
+                                                                                                        vision head (view) ┘  │
+ text + previous turn ─► DistilRoBERTa, fine-tuned ─► <s> vector ───────────────────────────────────────────────────────────┼─► fused head ─► emotion, probs
+                                                                                                          text head (view) ┘  │
+ (optional) audio 16 kHz ─► WavLM-base-plus, frozen ─► 13 layer means ─► learned mix ─► proj ─► audio head (view) ─────────┘  ▼
+ state {emotion, confidence, certainty, views, context} ─► one bracketed "stage note" ─► Qwen2.5-3B-Instruct, 4-bit ─► reply
 ```
 
 | Component | Model | Parameters | Role |
 |---|---|---|---|
-| Audio encoder | `microsoft/wavlm-base-plus` | 94.4 M | frozen; 13 time-averaged hidden states per clip |
+| Face detector | OpenCV YuNet (`face_detection_yunet_2023mar.onnx`) | 0.05 M | largest face per frame, with a margin |
+| Vision encoder | `trpakov/vit-face-expression` | 85.8 M | frozen ViT-base fine-tuned on facial expressions; CLS vector averaged over the frames |
 | Text encoder | `distilbert/distilroberta-base` | 82.1 M | fine-tuned on MELD, sees the utterance and the previous turn |
-| Heads | own code ([emo/model.py](emo/model.py)) | 0.5 M | layer mix + projection, text head, audio head, fused MLP, temperature |
-| Reply generator | `Qwen/Qwen2.5-0.5B-Instruct` | 494.0 M | frozen; prompted only from the state |
-| **Total on the inference path** | | **671.0 M** | cap is 6 000 M |
+| Heads | own code ([emo/model.py](emo/model.py)) | 0.5 M | vision projection, text head, vision head, fused MLP, temperature |
+| Reply generator | `Qwen/Qwen2.5-3B-Instruct`, 4-bit through MLX (`mlx-community/Qwen2.5-3B-Instruct-4bit`) | 3 085.9 M | frozen; prompted only from the state; the persona's key/value cache is computed once |
+| **Total on the inference path** | | **3 254.4 M** | cap is 6 000 M |
+| *(extension)* Audio encoder | `microsoft/wavlm-base-plus` | 94.4 M | frozen; only in the three-modality model |
 
-**Training** ([emo/train.py](emo/train.py)): the text encoder, the audio projection and all heads train
-jointly on MELD train; WavLM stays frozen (its features are cached once). Loss = CE(fused) + 0.3·CE(text head)
-+ 0.3·CE(audio head). For 15 % of training samples the audio is hidden, so the fused head also learns to work
-from text alone (that is also what happens live when a clip is missing or shorter than 0.3 s). The best epoch is
-picked on dev weighted-F1, then one temperature is fitted on dev so that `confidence` means something.
+**Faces** ([emo/faces.py](emo/faces.py); the encoder is in [emo/vision.py](emo/vision.py)): MELD ships each
+utterance as a short video clip. `make faces` streams the 10.9 GB archive in byte ranges without ever storing
+it: for every clip, ffmpeg decodes two frames per second (first 10 s), six evenly spaced frames are kept, YuNet
+finds the largest face in each, and the crops are saved as 224 px JPEGs. The live path (`--video`) runs exactly the same two functions on your file (a still
+image is one frame). The largest face is a heuristic for "the speaker": sitcom shots often show several people.
+
+**Training** ([emo/train.py](emo/train.py)): the text encoder, the vision projection and all heads train
+jointly on MELD train; the expression ViT stays frozen (its features are cached once). Loss = CE(fused) +
+0.3·CE(text head) + 0.3·CE(vision head). For 15 % of training samples the face features are hidden, so the
+fused head also learns to work from text alone (that is also what happens live when no face is found). The
+best epoch is picked on dev weighted-F1. Then each per-modality head is refit alone on the frozen branch
+vectors (30 epochs, best dev epoch): inside the joint run it only gets ~3 epochs of a decaying learning rate
+and the vision head collapsed to "neutral". This changes the `views`, never the prediction. Last, one
+temperature is fitted on dev so that `confidence` means something. Any subset of `text,audio,vision` trains
+with the same script.
 
 **State** ([emo/session.py](emo/session.py)): the fused head gives `emotion` and calibrated `probs`; the text
-and audio heads give `views` ("the words alone read X, the voice sounds Y"); `certainty` buckets the calibrated
-confidence (high ≥ 0.70, medium ≥ 0.45, else low). A `deque` of the last 4 messages (two exchanges: the person and Pip alternate) is the
-dialogue memory: its last entry is the classifier's context, all of it goes to the reply generator, and it is
-echoed in the state as `context`.
+and vision heads give `views` ("the words alone read X, the face looks Y"); `certainty` buckets the calibrated
+confidence (high ≥ 0.70, medium ≥ 0.45, else low). A `deque` of the last 4 messages (two exchanges: the
+person and Pip alternate) is the dialogue memory: its last entry is the classifier's context, all of it goes to
+the reply generator, and it is echoed in the state as `context`.
 
 **Reply** ([emo/responder.py](emo/responder.py)): the remembered messages become chat turns, and the state is
-rendered into one bracketed stage note in front of the person's words, e.g. `[sounds angry; the words alone read
-calm but the voice sounds angry, you may gently notice the mismatch; stay calm and steady, acknowledge the
-frustration, no jokes, no arguing] I said I was fine.` At low certainty the note only says "hard to tell how
+rendered into one bracketed stage note in front of the person's words, e.g. `[seems angry; the words alone read
+surprised, you may gently notice the mismatch; stay calm and steady, acknowledge the frustration, no jokes, no
+arguing] No way!` A view is only mentioned when it shows a different, non-neutral emotion (a face that shows
+nothing is not evidence against an angry sentence), and at low certainty the note only says "hard to tell how
 they feel, ask rather than assume". The seven `STYLE` lines are the whole character policy. Replies are
-validated (1–30 words, one line, nothing out of character such as "I can't assist with that"); otherwise a
-hand-written line for that emotion is used and the event says `"source": "fallback"`.
+cleaned (emojis stripped) and validated (1–30 words, one line, nothing out of character such as "I can't assist
+with that"); otherwise a hand-written line for that emotion is used and the event says `"source": "fallback"`.
 
 ## Real-time: definition and measurements
 
@@ -165,23 +168,27 @@ Measured numbers (`make bench`, 200 test utterances after 10 warm-up turns) are 
 `uv run python -m emo.serve` reads one request per line and streams the turn's events back, one per line.
 A robot controller runs it as a subprocess. `python -m emo.demo` prints the same events for humans.
 
-Request: `{"session_id": "s1", "text": "I know.", "audio_path": "clip.flac"}` (`audio_path` optional;
-16 kHz mono WAV/FLAC) or `{"session_id": "s1", "reset": true}`. The events of one real turn (the "I know."
-clip above; the `ready` line is what `serve` prints at start-up):
+Request: `{"session_id": "s1", "text": "I know.", "video_path": "clip.mp4"}` (`video_path`: any video or
+image, or a directory of face crops, optional; `audio_path`: 16 kHz mono WAV/FLAC, only used by a model with an
+audio branch) or `{"session_id": "s1", "reset": true}`. The events of one real turn (the `ready` line is what
+`serve` prints at start-up):
 
 ```json
-{"event": "ready", "device": "mps", "parameters_millions": {"classifier": 82.59, "responder": 494.03, "audio_encoder": 94.38, "total": 671.0}}
-{"event": "state", "session_id": "s1", "turn": 1, "text": "I know.", "audio_seconds": 4.18, "emotion": "neutral", "confidence": 0.9, "certainty": "high", "probs": {"neutral": 0.9, "joy": 0.023, "sadness": 0.016, "anger": 0.031, "fear": 0.015, "disgust": 0.009, "surprise": 0.005}, "views": {"text": "neutral", "audio": "anger", "agree": false}, "context": [], "latency_ms": {"state": 469}}
-{"event": "token", "session_id": "s1", "turn": 1, "text": "Oh, "}
-{"event": "done", "session_id": "s1", "turn": 1, "response": "Oh, don't worry! I'm just being careful. What do you need help with?", "source": "llm", "prompt": "[sounds calm; the words alone read calm but the voice sounds angry, you may gently notice the mismatch; keep it light and ask a small follow-up question] I know.", "latency_ms": {"state": 469, "first_token": 1249, "response": 1847}}
+{"event": "ready", "device": "mps", "parameters_millions": {"classifier": 82.59, "responder": 3085.94, "face_encoder": 85.8, "face_detector": 0.05, "total": 3254.38}}
+{"event": "state", "session_id": "s1", "turn": 1, "text": "No way!", "audio_seconds": null, "faces": 3, "emotion": "anger", "confidence": 0.467, "certainty": "medium", "probs": {"neutral": 0.054, "joy": 0.027, "sadness": 0.058, "anger": 0.467, "fear": 0.053, "disgust": 0.073, "surprise": 0.267}, "views": {"text": "surprise", "vision": "surprise", "agree": true}, "context": [], "latency_ms": {"state": 212}}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "I"}
+{"event": "done", "session_id": "s1", "turn": 1, "response": "I get it, let's talk when you're ready.", "source": "llm", "prompt": "[seems angry; the words alone read surprised, the face looks surprised, you may gently notice the mismatch; stay calm and steady, acknowledge the frustration, no jokes, no arguing] No way!", "latency_ms": {"state": 212, "first_token": 424, "response": 657}}
 ```
+(from [runs/serve_example.jsonl](runs/serve_example.jsonl): the request was `{"session_id": "s1", "text": "No way!", "video_path": "data/meld/videos/test/dia85_utt2.mp4"}`)
 
-Field rules: `emotion` and `views.text` are one of the seven MELD labels; `views.audio` is `null` without
-usable audio; `agree` is `null` when either view is missing; `probs` has exactly seven keys and sums to 1;
-`confidence = max(probs)` (both rounded to 3 decimals, so `probs` sums to 1 within rounding); `source` is
-`llm` or `fallback`; `context` holds at most 4 earlier messages; a `done` event carries an `error` field when
-generation failed and the fallback line was used; `error` events (bad request, unreadable audio) carry a
-`message` and a `hint` and never stop the server.
+Field rules: `emotion` and every non-null view are one of the seven MELD labels; `views.vision` is `null` when
+no face was found (and `views.audio` without usable audio, for a model with an audio branch); `agree` is `true`
+when all present views name the same emotion and `null` when fewer than two are present; `faces` is the number
+of face crops used (`null` without a video); `probs` has exactly seven keys and `confidence = max(probs)`, both
+rounded to 3 decimals, so `probs` sums to 1 within rounding; `source` is `llm` or `fallback`; `context` holds
+at most 4 earlier messages; a `done` event carries an `error` field when generation failed and the fallback
+line was used; `error` events (bad request, missing video or audio file, unreadable audio) carry a `message`
+and a `hint` and never stop the server.
 
 ## Results
 
@@ -196,150 +203,230 @@ only by `evaluate.py`; nothing was tuned on them.
 |---|---|---|---|---|---|---|---|---|---|---|
 | majority class (neutral) | 0.313 | 0.093 | 0.481 | 0.650 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
 | text only | 0.619 | 0.434 | 0.636 | 0.785 | 0.588 | 0.352 | 0.427 | 0.149 | 0.192 | 0.542 |
-| audio only | 0.479 | 0.287 | 0.495 | 0.650 | 0.348 | 0.232 | 0.415 | 0.000 | 0.000 | 0.363 |
-| text + audio, no context | 0.629 | 0.422 | 0.642 | 0.788 | 0.601 | 0.368 | 0.498 | 0.000 | 0.156 | 0.541 |
-| **text + audio (deployed)** | **0.631** | 0.419 | 0.643 | 0.790 | 0.600 | 0.387 | 0.504 | 0.000 | 0.111 | 0.538 |
-| deployed model, text head only (`views.text`) | 0.619 | 0.418 | 0.633 | 0.784 | 0.585 | 0.349 | 0.473 | 0.033 | 0.178 | 0.525 |
-| deployed model, audio head only (`views.audio`) | 0.450 | 0.239 | 0.522 | 0.684 | 0.222 | 0.161 | 0.382 | 0.000 | 0.000 | 0.222 |
+| vision only | 0.354 | 0.154 | 0.421 | 0.600 | 0.274 | 0.000 | 0.108 | 0.000 | 0.025 | 0.071 |
+| **text + vision (deployed)** | **0.621** | 0.420 | 0.631 | 0.784 | 0.598 | 0.363 | 0.470 | 0.059 | 0.154 | 0.512 |
+| text + vision, no context | 0.619 | 0.418 | 0.631 | 0.787 | 0.594 | 0.332 | 0.446 | 0.088 | 0.136 | 0.543 |
+| deployed model, text head only (`views.text`, 2 610 turns) | 0.623 | 0.441 | 0.635 | 0.781 | 0.582 | 0.332 | 0.474 | 0.125 | 0.243 | 0.549 |
+| deployed model, vision head only (`views.vision`, the 2 539 turns with a face) | 0.357 | 0.152 | 0.454 | 0.628 | 0.217 | 0.036 | 0.090 | 0.040 | 0.000 | 0.050 |
+| *extension:* audio only | 0.479 | 0.287 | 0.495 | 0.650 | 0.348 | 0.232 | 0.415 | 0.000 | 0.000 | 0.363 |
+| *extension:* text + audio | 0.631 | 0.419 | 0.643 | 0.790 | 0.600 | 0.387 | 0.504 | 0.000 | 0.111 | 0.538 |
+| *extension:* text + vision + audio | **0.640** | 0.443 | 0.654 | 0.797 | 0.610 | 0.371 | 0.490 | 0.092 | 0.162 | 0.576 |
 
 For scale: the original MELD paper's bc-LSTM baselines reach roughly 0.56 (text), 0.39 (audio) and 0.60
-(text + audio) weighted-F1; modern text-only transformers reach 0.62–0.66. Training took 31 min (text),
-1 min (audio), 16 min and 20 min (the two fused runs) on the M4.
+(text + audio) weighted-F1; modern text-only transformers reach 0.62–0.66. On the M4, a vision-only run trains
+in 1 min (frozen features, 30 epochs of a small head), a text + vision run in 8–10 min (4 epochs).
 
-**Does audio add measurable value?** weighted-F1(text + audio) − weighted-F1(text) = **+0.012**, paired
-bootstrap 95 % interval **[−0.001, +0.025]** over 1 000 resamples of the test utterances. So: a small gain
-that is not statistically significant on this test set. Audio helps most on anger (+0.08 F1) and sadness
-(+0.04), and mostly adds a second opinion. The text and audio heads disagree on **43.3 %** of test turns; on
-those turns the fused head is right 50.4 % of the time, the text head 48.3 %, the audio head 22.7 %. Feeding
-the previous utterance to the text encoder (`context`) changed nothing on test (+0.002).
+**Does vision add measurable value? Not with this encoder.** Paired bootstrap over the test utterances
+(1 000 resamples), weighted-F1 minus text only:
 
-**Confidence means something.** After temperature scaling (T = 1.20), the certainty buckets on test are:
+| model | difference | 95 % interval |
+|---|---|---|
+| text + vision (deployed) | +0.001 | [−0.011, +0.014] |
+| text + vision, no context | +0.000 | [−0.012, +0.013] |
+| text + audio | +0.012 | [−0.001, +0.025] |
+| text + vision + audio | **+0.020** | **[+0.009, +0.033]** |
+
+Adding the face to the words changes nothing measurable; the only combination that beats text with an interval
+clear of zero is all three modalities. The deployed model is still text + vision, because that is the track this
+prototype was asked to build; switching to the three-modality model is one line (`DEPLOYED_RUN`), costs the
+94 M-parameter WavLM and one pass over the audio per turn, and needs the utterance audio.
+
+**Why the face adds so little here.** The face signal is real but weak, and much weaker than the words:
+- On its own the face reaches 0.354 weighted-F1 (vision only) and 0.357 as the deployed model's refit vision
+  view, against 0.313 for always answering neutral; its best class is joy (F1 0.27 and 0.22).
+- The expression model's own 7-way classifier, used zero-shot and mapped to MELD labels
+  (`python -m emo.vision --zero-shot`, [runs/vision_zero_shot_dev.json](runs/vision_zero_shot_dev.json)),
+  scores 0.243 weighted-F1 on the 1 083 dev clips with a face, below the majority class (0.253); the face
+  reads "happy" in 52 % of joy utterances but also in 29 % of neutral ones.
+- The words and the face disagree on 49.5 % of test turns; on those turns the words are right 52.6 % of the
+  time and the face 17.7 %, so the fused head learned to follow the words.
+- MELD is a multi-camera sitcom: the largest face is not always the speaker, reaction shots are common, and the
+  label describes the utterance, not a frame. The frozen encoder was trained on FER2013 stills.
+
+What would likely help, and was not done: active-speaker detection (lip motion synchronised with the audio),
+fine-tuning the expression encoder on MELD faces, and a temporal model over frames instead of a mean.
+
+**Confidence means something.** After temperature scaling (T = 1.23), the certainty buckets on test are:
 
 | certainty | share of test turns | accuracy |
 |---|---|---|
-| high (≥ 0.70) | 43.0 % | 82.7 % |
-| medium (≥ 0.45) | 35.1 % | 58.4 % |
-| low | 22.0 % | 37.5 % |
+| high (≥ 0.70) | 41.1 % | 82.9 % |
+| medium (≥ 0.45) | 35.4 % | 58.3 % |
+| low | 23.5 % | 35.6 % |
 
-**Observations.** Fear (2 % of MELD) is predicted 11 times by the fused model, never correctly, and disgust
-gets 5 of its 68 test utterances; the confusion matrix in [runs/report.md](runs/report.md) shows both
-collapsing into neutral and anger. The learned
-WavLM layer mix stayed almost uniform (0.073–0.081 per layer), so the audio branch effectively uses the mean
-of all 13 layers. **Text dominates the fused head**: for a short phrase such as "I know." or "No." spoken
-angrily, sadly or happily, the fused emotion stays `neutral` at 0.9 confidence while `views.audio` moves with
-the voice. In MELD the words predict the label far better than the voice, so this is what the fused head
-learned; a higher modality dropout would push it towards the voice at some cost in weighted-F1 (not tried). In
-this prototype the voice therefore reaches the robot through `views.audio` and `agree`, which the reply prompt
-turns into "the words alone read calm but the voice sounds angry".
+**Observations.** Feeding the previous utterance to the text encoder changed nothing on test (0.621 vs 0.619).
+Fear and disgust (2.6 % of MELD each) stay below 0.25 F1 for every model; the confusion matrix in
+[runs/report.md](runs/report.md) shows both mostly collapsing into neutral and anger.
 
 ### Replies
 
-`make responses`: 105 dev utterances (15 per true emotion), each run as a single turn through the full
-pipeline, then again with greedy decoding, and once more with only the emotion fields of the note changed.
+`make responses`: 105 dev utterances (15 per true emotion) with a face, each run as a single turn through the
+full deployed pipeline (text + vision state, Qwen2.5-3B 4-bit), then again with greedy decoding, and once more
+with only the emotion fields of the note changed.
 
 | check | result |
 |---|---|
-| replies that fail validation and fall back to the hand-written line | 13.3 % (almost all assistant-speak such as "how can I help you", which is out of character) |
-| mean reply length | 13.3 words (limit 30) |
-| greedy reply changes when only the emotion in the note changes (89 pairs where the model wrote both replies) | 66.3 % |
+| replies that fail validation and fall back to the hand-written line | 0 of 105 |
+| mean reply length | 8.8 words (limit 30) |
+| greedy reply changes when only the emotion in the note changes | 98.6 % of 72 turns |
 
-The last row is the grounding check: for two thirds of the turns the words of the reply change when only the
-emotion changes; for the rest the model gives the same generic line either way (necessary, not sufficient,
-evidence). What it looks like, from [runs/responses.md](runs/responses.md):
+The last row is the grounding check. It counts only turns whose note names the emotion: on the
+32 low-certainty turns the note is "hard to tell how they feel" whatever the emotion, so the prompt
+does not change and neither can the reply. What it looks like, from [runs/responses.md](runs/responses.md):
 
 | person said | state | Pip (greedy) | if the state were... | Pip would say instead |
 |---|---|---|---|---|
-| What? | neutral | What's up? | joy | That's great to hear! Let's chat some more! |
-| Or! Or, we could go to the bank, close our accounts and cut them off at the source. | anger | I'm sorry to hear that. Let's try something different. | fear | Absolutely, that's a solid plan. Just make sure to secure all important documents before proceeding. |
-| Oh my God, he's lost it. He's totally lost it. | sadness | I'm sorry to hear that. Let's try to find him quickly. | anger | *(unchanged)* I'm sorry to hear that. Let's try to find him quickly. |
+| Oh my God, he's lost it. He's totally lost it. | sadness | I know, it must be really tough. | anger | I know, it sounds scary. Let's try to stay calm though. |
+| What? | neutral | Sounds good, what do you like to do in your free time? | joy | Just wanted to share, everything's okay! |
+| Where?! | surprise | Where what happened? Tell me! | neutral | Anywhere you like, just tell me! |
+| Ohh, you guys, remember that cute client I told you about? I bit him. | disgust (low certainty) | Oh no! That must have been tough. How did he react? | surprise | *(same prompt, same reply; not counted)* |
 
-Quality, honestly: replies are on tone but often generic ("I'm sorry to hear that. Let's talk more about
-this."). The 0.5 B reply model is the weakest link of the prototype; the classifier, the state contract and
-the streaming path would carry a larger model unchanged.
+Quality, honestly: replies are short, in character and on tone, but the state is only as good as the
+classifier (the "I bit him" line above is labelled neutral in MELD and read as disgust; "What?" is labelled
+surprise and read as neutral), and a 3 B model still produces the occasional non sequitur. Emojis are stripped
+before validation (they cannot be spoken).
+
+### Reply model size: 0.5 B vs 1.5 B vs 3 B
+
+The reply model is swappable without code changes: `EMO_RESPONSE_MODEL=Qwen/Qwen2.5-1.5B-Instruct make bench`
+(any HuggingFace chat model id; an `mlx-community/...` id selects the MLX backend). Four configurations were
+run through the same `make responses` and `make bench` with the same text + audio classifier (so they see the
+same states) on the same machine; raw outputs are in [runs/reply_model_comparison/](runs/reply_model_comparison/).
+
+| reply model | params | blind pairwise judging* | fallback rate | mean words | first `token` p50 / p95 | `done` p50 / p95 | decode | GPU memory |
+|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-0.5B-Instruct, bf16 | 494 M | – | 13.3 % | 13.3 | 866 / 1 047 ms | 1 330 / 1 904 ms | 35 tok/s | 2.9 GB |
+| Qwen2.5-1.5B-Instruct, bf16 | 1 544 M | 66 : 32 (5 ties) vs 0.5B | 16.2 % | 15.0 | 672 / 779 ms | 1 398 / 2 027 ms | 24 tok/s | 4.4 GB |
+| Qwen2.5-3B-Instruct, bf16 | 3 086 M | 60 : 42 (1 tie) vs 1.5B; 83 : 20 vs 0.5B | 1.9 % | 9.7 | 2 858 / 4 225 ms | 4 132 / 7 448 ms | 8 tok/s | 7.3 GB |
+| Qwen2.5-3B-Instruct, 4-bit (MLX) | 3 086 M | 47 : 48 (8 ties) vs bf16 3B; 78 : 21 (4 ties) vs 0.5B | 0.0 % | 9.0 | 654 / 772 ms | 920 / 1 117 ms | 45 tok/s | 2.9 GB (torch) + 2.2 GB (MLX) |
+
+\* The greedy replies of two models to the same 103 distinct dev utterances (same state, same note) were shown to three
+independent Claude judges per pair, order balanced, with the rubric "in character as a robot friend, fits how
+they sound, specific, natural"; majority vote, wins : wins. This is an external LLM judge, not a human study,
+and Claude is also the tool that helped write this repository; the raw votes are in
+[runs/reply_model_comparison/](runs/reply_model_comparison/).
+
+None of these rows uses the persona cache described below. The bf16 3B row was measured while the machine was
+swapping: 7.3 GB of weights do not sit comfortably next to everything else in 16 GB.
+
+**Decision.** The deployed reply model is Qwen2.5-3B-Instruct in 4-bit through MLX: judged as good as the
+bf16 model (47 : 48), clearly better than 0.5B (78 : 21), no fallbacks in 105 turns, and in the deployed
+configuration it meets every latency target (next section). bf16 3B misses the budget on this machine; 1.5B
+fits but loses to 3B 42 : 60. Off Apple silicon the same model runs in bf16 through transformers, on a CUDA
+GPU when there is one (`APPLE_SILICON` in [emo/config.py](emo/config.py)); the persona cache is only
+implemented for MLX.
 
 ### Latency and memory
 
-`make bench`: 200 consecutive test utterances in dialogue order through `Session` after 10 warm-up turns,
-one process, models warm, nothing else running. All times are measured from the moment the utterance is handed
-over; `first token` is when the streamer releases the first word.
+`make bench`: 200 consecutive test utterances in dialogue order through `Session`, after 10 warm-up turns,
+models warm, nothing else running. Every measured turn takes the **live video path**: the real MELD clip is
+decoded (ffmpeg), faces are detected (YuNet) and embedded (ViT), exactly as for `--video` (the raw clips of 31
+test dialogues are kept for this; the rest of the dataset keeps only crops). Times are measured from the
+moment the utterance is handed over; `first token` is when the first word is released.
 
-| device | `state` p50 / p95 | first `token` p50 / p95 | `done` p50 / p95 | decode | fallback | peak RSS | GPU memory |
+| | `state` p50 / p95 | first `token` p50 / p95 | `done` p50 / p95 | decode | fallback | peak RSS | GPU memory |
 |---|---|---|---|---|---|---|---|
 | target (p95) | 300 ms | 800 ms | 2 500 ms | | | | |
-| M4 GPU (MPS) | **111 / 268 ms** | 866 / **1 047 ms** | **1 330 / 1 904 ms** | 35.2 tok/s | 16 % | 2.0 GB | 2.9 GB |
-| M4 CPU only (50 turns) | 102 / 198 ms | 1 064 / 1 202 ms | 1 814 / 2 856 ms | 19.1 tok/s | 12 % | 4.2 GB | – |
+| M4, text + vision, Qwen2.5-3B 4-bit | **176 / 245 ms** | **523 / 664 ms** | **780 / 1 009 ms** | 46 tok/s | 1.5 % | 2.66 GB | 2.86 GB (torch) + 2.07 GB (MLX) |
 
-Two of the three targets are met on the GPU. The first-token target is missed by ~0.25 s at p95: the reply
-model has to prefill ~250 prompt tokens (persona, up to 4 remembered messages, the note) before its first word,
-and a 0.5 B model in bf16 on MPS does that in ~0.7 s. The state, which drives the robot's face, is there after
-~110 ms, and the whole reply is spoken-ready in ~1.3 s. Cold start (loading all three models and one warm-up
-turn) is 7 s. The small classifier is as fast on the CPU as on the GPU; only the reply model needs the GPU.
-The fallback rate here (16 %) is the validation catching assistant-speak on sitcom lines, see *Replies*.
+All three targets are met ([runs/bench_mps.json](runs/bench_mps.json)). Two measures got there: live frame
+decoding uses every core (it had inherited the one-thread setting of the dataset workers, which run eight at a
+time), and the persona's key/value cache is computed once, so each turn prefills only the conversation (~70
+instead of ~200 prompt tokens). The video path (decode, detect, embed) is part of every `state` number above; a
+robot that processes frames while the person is still speaking would take most of it off the critical path,
+so these numbers are the worst case. Cold start (all models loaded, one warm-up turn) is 2.6 s. A
+CPU-only run was not benchmarked for this configuration: the 3B reply model needs a GPU (Apple GPU through MLX,
+or CUDA through transformers).
+
+### Adding the voice (optional extension)
+
+The audio branch was the first version of this prototype (release v0.1, text + audio) and is kept as the
+optional third input: `make features-audio` caches frozen WavLM-base-plus features (13 time-averaged hidden
+layers with a learned mix), and `make train-audio` trains `audio`, `text-audio` and `text-audio-vision` with the
+same recipe. Their rows are in the tables above: audio alone 0.479, text + audio 0.631 (+0.012 over text,
+interval [−0.001, +0.025]), and all three modalities 0.640, the only combination whose gain over text is clear
+of zero (+0.020, [+0.009, +0.033]).
+
+To deploy it, set `DEPLOYED_RUN = "text-audio-vision"` in [emo/config.py](emo/config.py) and send an
+`audio_path` (16 kHz mono) with each request. It adds WavLM (94.4 M parameters) and one pass over the audio per
+turn; that configuration was not benchmarked here.
 
 ## Decisions and trade-offs
 
 | Decision | Choice | Why | Not taken |
 |---|---|---|---|
-| Track | text + audio | tone is what the brief is about, and the raw MELD video (10.9 GB) would not fit next to the models on this laptop | text + vision |
-| Data | official MELD CSVs + a 1.5 GB HuggingFace repack of the clips as 16 kHz FLAC | the repack's own CSVs had stripped apostrophes; the official ones are clean UTF-8. The repack's test archive also carries MELD's 132 re-extracted clips (`final_videos_test…`), which replace their mis-cut twins | the 10.9 GB raw release |
-| Audio encoder | WavLM-base-plus, frozen, 13 time-averaged layers, learned layer mix | the standard SUPERB recipe for emotion; caching the features once makes every audio experiment cheap, and the live path calls the same function | fine-tuning WavLM (hours per run, no cache) |
-| Text encoder | DistilRoBERTa, fully fine-tuned | 6 layers train in ~8 min per epoch here and land in the published text-only range | a public "emotion" DistilRoBERTa (it was trained on MELD, so the test set would leak) |
-| Dialogue context | the previous utterance as a second text segment | it is exactly the memory the robot keeps; ablated by the `both-nocontext` row | a dialogue-level model |
-| Fusion | concat -> one hidden layer -> 7 classes, plus a text head and an audio head, 15 % modality dropout | one hidden layer can model "words say X but voice says Y"; the extra heads give the `views` for free; dropout keeps the fused head usable without audio | a single linear layer (purely additive), cross-attention |
+| Track | text + vision (face), voice as an optional third input | a character robot has a camera on the person; the face shows what the words hide. The voice branch was built first and is kept as the measured extension | text + audio only |
+| Video data | stream the 10.9 GB MELD video archive once, in byte ranges, keep only 6 face crops per clip (~0.5 GB) and the raw clips of 31 test dialogues for the live-path benchmark | the archive does not fit on this laptop next to the models; crops are all the model needs, and the live path produces the same crops from any video | storing the videos, pre-extracted MELD visual features (not reproducible from a camera) |
+| Face detection | OpenCV YuNet, largest face per frame, 20 % margin | 53 k parameters, runs on the CPU inside OpenCV, no extra ML runtime | MTCNN / RetinaFace (heavier), active-speaker detection (needs audio-visual sync, out of scope) |
+| Vision encoder | `trpakov/vit-face-expression`, frozen, CLS vector averaged over the frames | a ViT-base already fine-tuned on facial expressions (FER2013) transfers better than a generic image model; frozen features are cached once, so every vision experiment is cheap | fine-tuning the ViT (hours, no cache), CLIP / DINOv2 generic features, a temporal video model |
+| Text encoder | DistilRoBERTa, fully fine-tuned | 6 layers: a text + vision run trains in 8–10 min here, and text alone lands in the published text-only range | a public "emotion" DistilRoBERTa (it was trained on MELD, so the test set would leak) |
+| Dialogue context | the previous utterance as a second text segment | it is exactly the memory the robot keeps; ablated by the `text-vision-nocontext` row | a dialogue-level model |
+| Fusion | concat -> one hidden layer -> 7 classes, plus one head per modality, 15 % modality dropout | one hidden layer can model "words say X but the face says Y"; the per-modality heads give the `views` for free; dropout keeps the fused head usable when no face is found | a single linear layer (purely additive), cross-attention |
 | Confidence | one temperature fitted on dev; high / medium / low buckets | the reply prompt and a robot both gate on it, so it has to mean something; bucket accuracy is reported | raw softmax |
-| Reply generator | Qwen2.5-0.5B-Instruct, frozen, bf16, prompted only from the state | smallest instruct model that holds a persona; 1 GB on disk | Qwen2.5-1.5B (3 GB would not fit), fine-tuning, few-shot prompts |
+| Reply generator | Qwen2.5-3B-Instruct, frozen, 4-bit through MLX (bf16 through transformers off Apple silicon), prompted only from the state; persona key/value cache | blind judging prefers it to 0.5B 78 : 21 and finds 4-bit as good as bf16 (47 : 48); with the persona cache it meets every latency target | 0.5B (generic, 13 % fallbacks), bf16 3B on this laptop (first token p95 4.2 s), 1.5B, fine-tuning, few-shot prompts |
 | ASR | none | the brief gives the transcript; whisper-tiny (38 M) fits the budget and plugs into `Session.step` in one line, but its word errors would need their own evaluation | whisper-tiny |
 | Interface | in-process `Session` + JSON Lines on stdin/stdout | zero web dependencies, testable with a shell pipe, spawned by a robot controller | HTTP / websocket (a ~30-line wrapper) |
-| Evidence | single seed, paired bootstrap interval on the audio gain, ablations, disagreement analysis | a small audio gain is inside seed noise; the interval says whether it is real | multi-seed runs (time) |
+| Evidence | single seed, paired bootstrap interval on the vision gain, ablations, disagreement analysis, blind judging of replies | a small gain can hide inside noise; the interval says whether it is real | multi-seed runs (time), a human rating study |
 
 ## Hardware and observed resources
 
-- Apple M4 (10 cores), 16 GB unified memory, macOS 26.2; Python 3.12, torch 2.14.0, transformers 5.17.0, uv.
+- Apple M4 (10 cores), 16 GB unified memory, macOS 26.2; Python 3.12, torch 2.14.0, transformers 5.17.0,
+  mlx-lm 0.31.3, uv.
 - Parameters on the inference path (counted at start-up, printed by `serve` and `bench`): classifier 82.59 M
-  + audio encoder 94.38 M + reply model 494.03 M = **671.0 M**, 11 % of the 6 B cap.
-- Disk: environment 0.9 GB, MELD audio + manifests 1.5 GB, cached WavLM features 0.27 GB, model weights
-  1.7 GB (HuggingFace cache), one checkpoint 0.16 GB. About 5 GB in total.
-- Training (all on the GPU): text 31 min (it shared the GPU with the feature cache), audio 1 min, fused 16–20 min per run; feature cache 15 min once.
-- Inference: 2.0 GB resident memory (4.2 GB CPU-only), 2.9 GB GPU memory, 7 s cold start; per-turn numbers above.
+  + face encoder 85.80 M + face detector 0.05 M + reply model 3 085.94 M = **3 254.4 M**, 54 % of the 6 B cap
+  (+94.4 M for WavLM in the three-modality extension).
+- Disk: environment 1.2 GB; MELD audio + manifests 1.5 GB; face crops 0.54 GB; kept test clips 0.21 GB;
+  cached features 0.03 GB (vision) + 0.27 GB (audio); weights 0.33 GB (DistilRoBERTa) + 0.34 GB (ViT) +
+  1.75 GB (Qwen 3B 4-bit) + 0.38 GB (WavLM, extension); one checkpoint 0.17 GB. About 7 GB in total; the
+  10.9 GB video archive is streamed and never stored.
+- Data preparation: face extraction ~20 min (network-bound, 8 CPU workers); vision feature cache ~24 min on the GPU.
+- Training (GPU): vision-only 1 min; text + vision 8–10 min per run; text only 31 min (it shared the GPU).
+- Inference: 2.66 GB resident memory, 2.86 GB (torch) + 2.07 GB (MLX) GPU memory, 2.6 s cold start;
+  per-turn numbers above.
 
 ## Limitations and what was left out
 
-**Intentionally left out** (each with its natural plug-in point): the vision track and the three-modality
-extension (disk); reinforcement learning; ASR (`Session.step`); microphone capture, voice-activity detection and
-barge-in (the caller's job); an HTTP or websocket server (wrap `Session`); speaker identity; fine-tuning WavLM;
-class-weighted or focal losses; hyper-parameter search; multiple seeds; a larger or fine-tuned reply model;
-text-to-speech and face animation; quantization (unnecessary at 0.67 B).
+**Intentionally left out** (each with its natural plug-in point): reinforcement learning; ASR (`Session.step`);
+camera and microphone capture, voice-activity detection and barge-in (the caller's job: it hands over one
+utterance with its video); an HTTP or websocket server (wrap `Session`); active-speaker detection and speaker
+identity; fine-tuning the vision or audio encoders; class-weighted or focal losses; hyper-parameter search;
+multiple seeds; fine-tuning the reply model; text-to-speech and face animation.
 
 **Known limitations**
-- MELD is sitcom audio: laugh track, music, overlapping speakers, and a studio mix; a robot's microphone will sound different.
-- At deployment the previous turn is usually the robot's own reply, which MELD never contains; the `both-nocontext` row bounds how much the model depends on context.
+- MELD is a sitcom: multi-camera cuts, reaction shots, several people in frame, studio lighting. "The largest face" is often but not always the speaker, and a robot's camera will see one person, closer, in worse light.
+- The expression encoder was trained on FER2013 (small grey-scale faces, mostly posed or in-the-wild stills); it is used frozen, so its domain gap to MELD and to a robot's camera is not trained away.
+- Six frames over the first 10 s summarise a face by its average; a fleeting expression can vanish in the mean.
+- At deployment the previous turn is usually the robot's own reply, which MELD never contains; the `text-vision-nocontext` row bounds how much the model depends on context.
 - The classifier is utterance-level; fear and disgust are rare in MELD and score low for every model.
 - Numbers are single-seed and MPS kernels are not bit-deterministic; small differences between runs are noise.
-- The reply model is 0.5 B parameters: replies are on-tone but often generic. Quality is judged by the counterfactual check and a small manual sample, not an automatic score.
+- Reply quality is judged by an automatic counterfactual check and a blind LLM judge, not by people.
 - When a reply fails validation, the fallback line replaces the tokens that were already streamed; consumers must treat `done.response` as final.
 
 ## Repository layout
 
 ```
 emo/config.py          paths, labels, model ids, hyperparameters, thresholds, latency targets (single source of truth)
-emo/data.py            download, manifests (previous-turn context, clip join), Dataset + collate
-emo/audio.py           16 kHz loading, frozen WavLM encoder, feature cache
-emo/model.py           EmotionModel: text encoder, audio branch, fused head, temperature; save/load
-emo/train.py           training loop, dev selection, temperature fit, logits + summary per run
-emo/evaluate.py        test tables, bootstrap CI for the audio gain, disagreement, calibration -> runs/report.md
-emo/responder.py       persona, stage note, streamed Qwen generation, validation + fallback
+emo/data.py            download, manifests (previous-turn context, clip and face joins), Dataset + collate
+emo/faces.py           frames from a video, YuNet face crops; streams the MELD video archive into crops (torch-free)
+emo/vision.py          frozen facial-expression ViT, feature cache
+emo/audio.py           16 kHz loading, frozen WavLM encoder, feature cache (optional voice extension)
+emo/model.py           EmotionModel: any subset of text / audio / vision branches, per-modality heads, fused head, temperature
+emo/train.py           training loop, dev selection, view-head refit, temperature fit, logits + summary per run
+emo/evaluate.py        test tables, bootstrap CI for the gain over text, disagreement, calibration -> runs/report.md
+emo/responder.py       persona, stage note, streamed generation (transformers, or MLX for 4-bit models), validation + fallback
 emo/session.py         Classifier (one utterance -> state fields) and Session (memory + event stream)
 emo/demo.py            replay a MELD dialogue or your own clip; human-readable output
 emo/serve.py           JSON Lines over stdin/stdout
 emo/bench.py           latency, memory, parameter budget -> runs/bench_<device>.json
 emo/eval_responses.py  reply checks on dev: fallback rate, length, counterfactual sensitivity
-tests/                 unit tests with stubs (data manifests, model heads, session contract)
-runs/                  committed results (json / md); checkpoints and logits stay local
+tests/                 unit tests with stubs (manifests, clip names and stills, model heads and view refit, session contract)
+runs/                  committed results (json / md, demo traces, reply-model comparison); checkpoints and logits stay local
 ```
 
 ## Use of AI tools
 
 The design, code and this write-up were produced with Claude (Claude Code) as a pair programmer; every
 decision, number and limitation above was checked by running the code on the machine described in the
-hardware section. Pretrained components are credited in the components table; everything under `emo/` is
-original to this repository.
+hardware section. Claude was also used as the blind judge in the reply-model comparison, which is stated
+there. Pretrained components are credited in the components table; everything under `emo/` is original to
+this repository.

@@ -7,31 +7,31 @@
     "torch": "2.14.0",
     "transformers": "5.17.0"
   },
-  "device": "cpu",
-  "turns_measured": 50,
-  "model_load_s": 2.5,
-  "cold_start_s": 5.9,
+  "device": "mps",
+  "turns_measured": 200,
+  "model_load_s": 5.3,
+  "cold_start_s": 6.9,
   "latency_ms": {
     "state": {
-      "p50": 102,
-      "p95": 198,
+      "p50": 111,
+      "p95": 268,
       "target_p95": 300
     },
     "first_token": {
-      "p50": 1064,
-      "p95": 1202,
+      "p50": 866,
+      "p95": 1047,
       "target_p95": 800
     },
     "response": {
-      "p50": 1814,
-      "p95": 2856,
+      "p50": 1330,
+      "p95": 1904,
       "target_p95": 2500
     }
   },
-  "decode_tokens_per_s": 19.1,
-  "fallback_rate": 0.12,
-  "peak_rss_gb": 4.15,
-  "mps_allocated_gb": null,
+  "decode_tokens_per_s": 35.2,
+  "fallback_rate": 0.16,
+  "peak_rss_gb": 1.97,
+  "mps_allocated_gb": 2.93,
   "parameters_millions": {
     "classifier": 82.59,
     "responder": 494.03,

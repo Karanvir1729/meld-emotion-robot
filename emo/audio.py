@@ -42,7 +42,7 @@ class AudioEncoder:
 
 
 def features_path(split: str):
-    return DATA_DIR / f"features_{split}.pt"
+    return DATA_DIR / f"features_audio_{split}.pt"
 
 
 def load_features(split: str) -> dict[str, torch.Tensor]:

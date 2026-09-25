@@ -5,12 +5,14 @@ from emo.session import Session
 
 
 class StubClassifier:
+    audio_encoder = face_encoder = None  # no inputs are loaded
+
     def __init__(self):
         self.calls = []
 
-    def classify(self, text, prev_text, wave):
+    def classify(self, text, prev_text, wave=None, faces=None):
         self.calls.append((text, prev_text))
-        return {"emotion": "anger", "confidence": 0.8, "certainty": "high", "probs": {}, "views": {"text": "neutral", "audio": "anger", "agree": False}}
+        return {"emotion": "anger", "confidence": 0.8, "certainty": "high", "probs": {}, "views": {"text": "surprise", "vision": "neutral", "agree": False}}
 
 
 class StubResponder:
@@ -28,9 +30,10 @@ def test_turn_emits_state_tokens_done_and_remembers_the_dialogue():
     events = list(session.step("I said I was fine."))
     assert [e["event"] for e in events] == ["state", "token", "token", "done"]
     state, done = events[0], events[-1]
-    assert state["emotion"] == "anger" and state["context"] == [] and state["audio_seconds"] is None
+    assert state["emotion"] == "anger" and state["context"] == [] and state["audio_seconds"] is None and state["faces"] is None
     assert done["response"] == "Hey, that sounds rough." and done["source"] == "llm"
-    assert done["prompt"] == "[sounds angry; the words alone read calm but the voice sounds angry, you may gently notice the mismatch; stay calm and steady, acknowledge the frustration, no jokes, no arguing] I said I was fine."
+    # the surprised words are mentioned, the neutral face is not
+    assert done["prompt"] == "[seems angry; the words alone read surprised, you may gently notice the mismatch; stay calm and steady, acknowledge the frustration, no jokes, no arguing] I said I was fine."
 
     events = list(session.step("Whatever."))
     assert classifier.calls[1] == ("Whatever.", "Hey, that sounds rough.")  # previous turn is the classifier context
@@ -44,6 +47,12 @@ def test_invalid_reply_falls_back_to_the_hand_written_line():
     session = Session(StubClassifier(), StubResponder(["As an AI language model I detect anger."]))
     done = list(session.step("Ugh."))[-1]
     assert (done["response"], done["source"]) == (FALLBACK["anger"], "fallback")
+
+
+def test_emojis_are_stripped_before_validation():
+    session = Session(StubClassifier(), StubResponder(["Pip: Take a breath 😤 I'm right here."]))
+    done = list(session.step("Ugh."))[-1]
+    assert (done["response"], done["source"]) == ("Take a breath I'm right here.", "llm")
 
 
 def test_generation_failure_still_ends_the_turn():

@@ -1,0 +1,15 @@
+{"event": "ready", "device": "mps", "parameters_millions": {"classifier": 82.59, "responder": 3085.94, "face_encoder": 85.8, "face_detector": 0.05, "total": 3254.38}}
+{"event": "state", "session_id": "s1", "turn": 1, "text": "No way!", "audio_seconds": null, "faces": 3, "emotion": "anger", "confidence": 0.467, "certainty": "medium", "probs": {"neutral": 0.054, "joy": 0.027, "sadness": 0.058, "anger": 0.467, "fear": 0.053, "disgust": 0.073, "surprise": 0.267}, "views": {"text": "surprise", "vision": "surprise", "agree": true}, "context": [], "latency_ms": {"state": 212}}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "I"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " get"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " let"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "'s"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " talk"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " when"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " you"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "'re"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " ready"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 1, "response": "I get it, let's talk when you're ready.", "source": "llm", "prompt": "[seems angry; the words alone read surprised, the face looks surprised, you may gently notice the mismatch; stay calm and steady, acknowledge the frustration, no jokes, no arguing] No way!", "latency_ms": {"state": 212, "first_token": 424, "response": 657}}

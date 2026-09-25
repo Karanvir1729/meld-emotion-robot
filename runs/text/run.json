@@ -1,5 +1,7 @@
 {
-  "modalities": "text",
+  "modalities": [
+    "text"
+  ],
   "context": 1,
   "seed": 0,
   "epochs": 4,
