@@ -32,8 +32,8 @@ def video_frames(path: str, threads: int = 0) -> list[np.ndarray]:
     threads=0 lets ffmpeg use every core (one live turn); the dataset workers pass 1 because eight of them run at once.
     """
     with tempfile.TemporaryDirectory() as tmp:
-        subprocess.run(["ffmpeg", "-loglevel", "error", "-threads", str(threads), "-t", str(MAX_AUDIO_SECONDS), "-i", path,
-                        "-an", "-vf", f"fps=2,scale={DETECT_WIDTH}:-2", f"{tmp}/%03d.jpg"], check=False)
+        subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-threads", str(threads), "-t", str(MAX_AUDIO_SECONDS), "-i", path,
+                        "-an", "-vf", f"fps=2,scale={DETECT_WIDTH}:-2", f"{tmp}/%03d.jpg"], check=False)  # -nostdin: never read serve's requests
         files = sorted(Path(tmp).glob("*.jpg"))
         picks = np.linspace(0, len(files) - 1, min(FRAMES_PER_CLIP, len(files))).round().astype(int) if files else []
         return [cv2.imread(str(files[i])) for i in picks]
@@ -62,7 +62,10 @@ def largest_face(frame: np.ndarray) -> np.ndarray | None:
 def faces_from_video(path: str) -> list[Image.Image]:
     """Live path: a video or still image -> face crops as PIL images. The dataset is built with the same two functions."""
     image = cv2.imread(path)  # None for anything that is not a still image
-    crops = [largest_face(frame) for frame in ([image] if image is not None else video_frames(path))]
+    frames = [image] if image is not None else video_frames(path)
+    if not frames:
+        raise ValueError(f"{path}: cannot decode any video frame")
+    crops = [largest_face(frame) for frame in frames]
     return [Image.fromarray(cv2.cvtColor(c, cv2.COLOR_BGR2RGB)) for c in crops if c is not None]
 
 

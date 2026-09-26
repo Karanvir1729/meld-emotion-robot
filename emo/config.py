@@ -21,13 +21,13 @@ MELD_VIDEO_URL = "https://huggingface.co/datasets/declare-lab/MELD/resolve/main/
 # --- Models (all run locally; well under the 6 B parameter cap) --------------
 TEXT_MODEL = "distilbert/distilroberta-base"  # 82 M, fine-tuned
 VISION_MODEL = "trpakov/vit-face-expression"  # 86 M, frozen; ViT-base fine-tuned on facial expressions
-AUDIO_MODEL = "microsoft/wavlm-base-plus"  # 95 M, frozen feature extractor (optional third modality)
+AUDIO_MODEL = "microsoft/wavlm-base-plus"  # 94 M, frozen voice encoder
 FACE_DETECTOR_URL = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
 FACE_DETECTOR = DATA_DIR / "face_detection_yunet_2023mar.onnx"  # OpenCV YuNet
 FACE_DETECTOR_PARAMS = 53121  # counted once from the ONNX initializers
 FACES_DIR = MELD_DIR / "faces"  # data/meld/faces/{split}/{id}/{k}.jpg
 VIDEOS_DIR = MELD_DIR / "videos"  # data/meld/videos/test/{id}.mp4, raw clips of a few dialogues
-KEPT_VIDEO_DIALOGUES = (*range(30), 85)  # test dialogues whose raw clips are kept, so demo and bench run the live video path (~0.2 GB)
+KEPT_VIDEO_DIALOGUES = range(30)  # test dialogues whose raw clips are kept, so demo and bench run the live video path (~0.2 GB)
 # Qwen2.5-3B-Instruct (3.1 B), frozen: 4-bit through MLX on Apple silicon, bf16 through transformers elsewhere.
 # EMO_RESPONSE_MODEL takes any HuggingFace chat model id (an mlx-community/... id selects the MLX backend).
 APPLE_SILICON = sys.platform == "darwin" and platform.machine() == "arm64"
@@ -60,7 +60,7 @@ AUX_LOSS_WEIGHT = 0.3  # weight of each per-modality head in a fused run (they a
 MODALITY_DROPOUT = 0.15  # fraction of training samples whose audio / vision is hidden from the fused head
 
 # --- Inference ---------------------------------------------------------------
-DEPLOYED_RUN = "text-vision"  # run directory used by demo / serve / bench (fixed before evaluation)
+DEPLOYED_RUN = "text-audio-vision"  # run used by demo / serve / bench / responses: the three-modality extension; the core track is "text-vision"
 CERTAINTY_THRESHOLDS = {"high": 0.70, "medium": 0.45}  # on calibrated max-probability
 MEMORY_MESSAGES = 4  # remembered messages per session; the person and Pip alternate, so two exchanges
 MAX_REPLY_WORDS = 30

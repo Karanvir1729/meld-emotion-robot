@@ -1,7 +1,7 @@
 [project]
 name = "meld-emotion-robot"
 version = "0.1.0"
-description = "Real-time text + vision emotion state and grounded replies for a character robot, trained on MELD"
+description = "Real-time text + vision + voice emotion state and grounded replies for a character robot, trained on MELD"
 requires-python = ">=3.12"
 dependencies = [
     "torch>=2.4",

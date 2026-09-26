@@ -1,0 +1,165 @@
+{"event": "state", "session_id": "s1", "turn": 1, "text": "Okay.", "audio_seconds": 1.05, "faces": 2, "emotion": "neutral", "confidence": 0.991, "certainty": "high", "probs": {"neutral": 0.991, "joy": 0.004, "sadness": 0.001, "anger": 0.001, "fear": 0.001, "disgust": 0.001, "surprise": 0.0}, "views": {"text": "neutral", "audio": "neutral", "vision": "anger", "agree": false}, "context": [], "latency_ms": {"state": 1285}}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "Is"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " that"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " just"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " for"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " now"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " or"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " do"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " you"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " need"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": " something"}
+{"event": "token", "session_id": "s1", "turn": 1, "text": "?"}
+{"event": "done", "session_id": "s1", "turn": 1, "response": "Is that just for now, or do you need something?", "source": "llm", "prompt": "[seems calm; the face looks angry, you may gently notice the mismatch; keep it light and ask a small follow-up question] Okay.", "latency_ms": {"state": 1285, "first_token": 1678, "response": 1977}}
+{"event": "state", "session_id": "s1", "turn": 2, "text": "Ross, didn't you say that there was an elevator in here?", "audio_seconds": 2.92, "faces": 6, "emotion": "neutral", "confidence": 0.848, "certainty": "high", "probs": {"neutral": 0.848, "joy": 0.019, "sadness": 0.022, "anger": 0.028, "fear": 0.013, "disgust": 0.007, "surprise": 0.063}, "views": {"text": "neutral", "audio": "neutral", "vision": "neutral", "agree": true}, "context": [{"speaker": "user", "text": "Okay.", "emotion": "neutral"}, {"speaker": "robot", "text": "Is that just for now, or do you need something?"}], "latency_ms": {"state": 401}}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "Yeah"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " but"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "'s"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " closed"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "."}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " What"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " was"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " that"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": " for"}
+{"event": "token", "session_id": "s1", "turn": 2, "text": "?"}
+{"event": "done", "session_id": "s1", "turn": 2, "response": "Yeah, but it's closed. What was that for?", "source": "llm", "prompt": "[seems calm; keep it light and ask a small follow-up question] Ross, didn't you say that there was an elevator in here?", "latency_ms": {"state": 401, "first_token": 802, "response": 1099}}
+{"event": "state", "session_id": "s1", "turn": 3, "text": "Uhh, yes I did but there isn't. Okay, here we go.", "audio_seconds": 3.39, "faces": 6, "emotion": "neutral", "confidence": 0.864, "certainty": "high", "probs": {"neutral": 0.864, "joy": 0.048, "sadness": 0.013, "anger": 0.037, "fear": 0.024, "disgust": 0.009, "surprise": 0.005}, "views": {"text": "neutral", "audio": "neutral", "vision": "neutral", "agree": true}, "context": [{"speaker": "user", "text": "Okay.", "emotion": "neutral"}, {"speaker": "robot", "text": "Is that just for now, or do you need something?"}, {"speaker": "user", "text": "Ross, didn't you say that there was an elevator in here?", "emotion": "neutral"}, {"speaker": "robot", "text": "Yeah, but it's closed. What was that for?"}], "latency_ms": {"state": 354}}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "Got"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " let"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "'s"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " see"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " what"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " else"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " we"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " can"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " do"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": " then"}
+{"event": "token", "session_id": "s1", "turn": 3, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 3, "response": "Got it, let's see what else we can do then.", "source": "llm", "prompt": "[seems calm; keep it light and ask a small follow-up question] Uhh, yes I did but there isn't. Okay, here we go.", "latency_ms": {"state": 354, "first_token": 849, "response": 1166}}
+{"event": "state", "session_id": "s1", "turn": 4, "text": "Okay, go left. Left! Left!", "audio_seconds": 1.79, "faces": 0, "emotion": "anger", "confidence": 0.429, "certainty": "low", "probs": {"neutral": 0.161, "joy": 0.225, "sadness": 0.032, "anger": 0.429, "fear": 0.067, "disgust": 0.039, "surprise": 0.048}, "views": {"text": "neutral", "audio": "anger", "vision": null, "agree": false}, "context": [{"speaker": "user", "text": "Ross, didn't you say that there was an elevator in here?", "emotion": "neutral"}, {"speaker": "robot", "text": "Yeah, but it's closed. What was that for?"}, {"speaker": "user", "text": "Uhh, yes I did but there isn't. Okay, here we go.", "emotion": "neutral"}, {"speaker": "robot", "text": "Got it, let's see what else we can do then."}], "latency_ms": {"state": 156}}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "Left"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " is"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " the"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " way"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " to"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " go"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " keep"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": " going"}
+{"event": "token", "session_id": "s1", "turn": 4, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 4, "response": "Left is the way to go, keep going.", "source": "llm", "prompt": "[hard to tell how they feel, ask rather than assume] Okay, go left. Left! Left!", "latency_ms": {"state": 156, "first_token": 611, "response": 849}}
+{"event": "state", "session_id": "s1", "turn": 5, "text": "Okay, y'know what? There is no more left, left!", "audio_seconds": 3.43, "faces": 6, "emotion": "anger", "confidence": 0.704, "certainty": "high", "probs": {"neutral": 0.038, "joy": 0.062, "sadness": 0.087, "anger": 0.704, "fear": 0.04, "disgust": 0.04, "surprise": 0.029}, "views": {"text": "anger", "audio": "neutral", "vision": "neutral", "agree": false}, "context": [{"speaker": "user", "text": "Uhh, yes I did but there isn't. Okay, here we go.", "emotion": "neutral"}, {"speaker": "robot", "text": "Got it, let's see what else we can do then."}, {"speaker": "user", "text": "Okay, go left. Left! Left!", "emotion": "anger"}, {"speaker": "robot", "text": "Left is the way to go, keep going."}], "latency_ms": {"state": 313}}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "I"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " get"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " you"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "'re"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " frustrated"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "."}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " Left"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " is"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " the"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " way"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " to"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " go"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": " then"}
+{"event": "token", "session_id": "s1", "turn": 5, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 5, "response": "I get it, you're frustrated. Left is the way to go then.", "source": "llm", "prompt": "[seems angry; stay calm and steady, acknowledge the frustration, no jokes, no arguing] Okay, y'know what? There is no more left, left!", "latency_ms": {"state": 313, "first_token": 798, "response": 1182}}
+{"event": "state", "session_id": "s1", "turn": 6, "text": "Oh okay, lift it straight up over your head!", "audio_seconds": 2.09, "faces": 4, "emotion": "anger", "confidence": 0.74, "certainty": "high", "probs": {"neutral": 0.06, "joy": 0.071, "sadness": 0.017, "anger": 0.74, "fear": 0.06, "disgust": 0.032, "surprise": 0.02}, "views": {"text": "anger", "audio": "anger", "vision": "neutral", "agree": false}, "context": [{"speaker": "user", "text": "Okay, go left. Left! Left!", "emotion": "anger"}, {"speaker": "robot", "text": "Left is the way to go, keep going."}, {"speaker": "user", "text": "Okay, y'know what? There is no more left, left!", "emotion": "anger"}, {"speaker": "robot", "text": "I get it, you're frustrated. Left is the way to go then."}], "latency_ms": {"state": 259}}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "Alright"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " take"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " your"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " time"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "."}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " I"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "'m"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " here"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " if"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " you"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " need"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " to"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " calm"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": " down"}
+{"event": "token", "session_id": "s1", "turn": 6, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 6, "response": "Alright, take your time. I'm here if you need to calm down.", "source": "llm", "prompt": "[seems angry; stay calm and steady, acknowledge the frustration, no jokes, no arguing] Oh okay, lift it straight up over your head!", "latency_ms": {"state": 259, "first_token": 801, "response": 1184}}
+{"event": "state", "session_id": "s1", "turn": 7, "text": "Straight up over your head!", "audio_seconds": 1.56, "faces": 3, "emotion": "anger", "confidence": 0.875, "certainty": "high", "probs": {"neutral": 0.016, "joy": 0.027, "sadness": 0.007, "anger": 0.875, "fear": 0.044, "disgust": 0.025, "surprise": 0.006}, "views": {"text": "anger", "audio": "anger", "vision": "anger", "agree": true}, "context": [{"speaker": "user", "text": "Okay, y'know what? There is no more left, left!", "emotion": "anger"}, {"speaker": "robot", "text": "I get it, you're frustrated. Left is the way to go then."}, {"speaker": "user", "text": "Oh okay, lift it straight up over your head!", "emotion": "anger"}, {"speaker": "robot", "text": "Alright, take your time. I'm here if you need to calm down."}], "latency_ms": {"state": 217}}
+{"event": "token", "session_id": "s1", "turn": 7, "text": "Got"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " steady"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " now"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": "."}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " Just"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " breathe"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " and"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": " lift"}
+{"event": "token", "session_id": "s1", "turn": 7, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 7, "response": "Got it, steady now. Just breathe and lift.", "source": "llm", "prompt": "[seems angry; stay calm and steady, acknowledge the frustration, no jokes, no arguing] Straight up over your head!", "latency_ms": {"state": 217, "first_token": 707, "response": 962}}
+{"event": "state", "session_id": "s1", "turn": 8, "text": "You can do it!", "audio_seconds": 0.85, "faces": 0, "emotion": "joy", "confidence": 0.735, "certainty": "high", "probs": {"neutral": 0.04, "joy": 0.735, "sadness": 0.005, "anger": 0.091, "fear": 0.01, "disgust": 0.002, "surprise": 0.117}, "views": {"text": "joy", "audio": "anger", "vision": null, "agree": false}, "context": [{"speaker": "user", "text": "Oh okay, lift it straight up over your head!", "emotion": "anger"}, {"speaker": "robot", "text": "Alright, take your time. I'm here if you need to calm down."}, {"speaker": "user", "text": "Straight up over your head!", "emotion": "anger"}, {"speaker": "robot", "text": "Got it, steady now. Just breathe and lift."}], "latency_ms": {"state": 151}}
+{"event": "token", "session_id": "s1", "turn": 8, "text": "H"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": "aha"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " you"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": "'re"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " amazing"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": "!"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " Just"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " do"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " and"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " I"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": "'ll"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " cheer"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " for"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": " ya"}
+{"event": "token", "session_id": "s1", "turn": 8, "text": "."}
+{"event": "done", "session_id": "s1", "turn": 8, "response": "Haha, you're amazing! Just do it and I'll cheer for ya.", "source": "llm", "prompt": "[seems happy; the voice sounds angry, you may gently notice the mismatch; share the good mood, be warm and a little playful] You can do it!", "latency_ms": {"state": 151, "first_token": 660, "response": 1055}}
+{"event": "state", "session_id": "s1", "turn": 9, "text": "You can do it!", "audio_seconds": 1.26, "faces": 1, "emotion": "joy", "confidence": 0.842, "certainty": "high", "probs": {"neutral": 0.03, "joy": 0.842, "sadness": 0.003, "anger": 0.058, "fear": 0.004, "disgust": 0.001, "surprise": 0.062}, "views": {"text": "joy", "audio": "anger", "vision": "neutral", "agree": false}, "context": [{"speaker": "user", "text": "Straight up over your head!", "emotion": "anger"}, {"speaker": "robot", "text": "Got it, steady now. Just breathe and lift."}, {"speaker": "user", "text": "You can do it!", "emotion": "joy"}, {"speaker": "robot", "text": "Haha, you're amazing! Just do it and I'll cheer for ya."}], "latency_ms": {"state": 200}}
+{"event": "token", "session_id": "s1", "turn": 9, "text": "Yeah"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": ","}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " I"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": "'m"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " all"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " fired"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " up"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": "!"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " Let"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": "'s"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " rock"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 9, "text": "!"}
+{"event": "done", "session_id": "s1", "turn": 9, "response": "Yeah, I'm all fired up! Let's rock it!", "source": "llm", "prompt": "[seems happy; the voice sounds angry, you may gently notice the mismatch; share the good mood, be warm and a little playful] You can do it!", "latency_ms": {"state": 200, "first_token": 662, "response": 982}}
+{"event": "state", "session_id": "s1", "turn": 10, "text": "Okay.", "audio_seconds": 0.96, "faces": 1, "emotion": "neutral", "confidence": 0.982, "certainty": "high", "probs": {"neutral": 0.982, "joy": 0.012, "sadness": 0.001, "anger": 0.003, "fear": 0.002, "disgust": 0.001, "surprise": 0.0}, "views": {"text": "neutral", "audio": "neutral", "vision": "neutral", "agree": true}, "context": [{"speaker": "user", "text": "You can do it!", "emotion": "joy"}, {"speaker": "robot", "text": "Haha, you're amazing! Just do it and I'll cheer for ya."}, {"speaker": "user", "text": "You can do it!", "emotion": "joy"}, {"speaker": "robot", "text": "Yeah, I'm all fired up! Let's rock it!"}], "latency_ms": {"state": 174}}
+{"event": "token", "session_id": "s1", "turn": 10, "text": "Got"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " it"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": "!"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " How"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": "'s"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " your"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " day"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " been"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " so"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": " far"}
+{"event": "token", "session_id": "s1", "turn": 10, "text": "?"}
+{"event": "done", "session_id": "s1", "turn": 10, "response": "Got it! How's your day been so far?", "source": "llm", "prompt": "[seems calm; keep it light and ask a small follow-up question] Okay.", "latency_ms": {"state": 174, "first_token": 557, "response": 831}}
+{"event": "state", "session_id": "s1", "turn": 11, "text": "You got it?", "audio_seconds": 1.07, "faces": 0, "emotion": "neutral", "confidence": 0.657, "certainty": "medium", "probs": {"neutral": 0.657, "joy": 0.08, "sadness": 0.008, "anger": 0.026, "fear": 0.01, "disgust": 0.002, "surprise": 0.217}, "views": {"text": "neutral", "audio": "neutral", "vision": null, "agree": true}, "context": [{"speaker": "user", "text": "You can do it!", "emotion": "joy"}, {"speaker": "robot", "text": "Yeah, I'm all fired up! Let's rock it!"}, {"speaker": "user", "text": "Okay.", "emotion": "neutral"}, {"speaker": "robot", "text": "Got it! How's your day been so far?"}], "latency_ms": {"state": 152}}
+{"event": "token", "session_id": "s1", "turn": 11, "text": "Always"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": "!"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " What"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": "'s"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " something"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " fun"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " you"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": "'re"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " looking"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " forward"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": " to"}
+{"event": "token", "session_id": "s1", "turn": 11, "text": "?"}
+{"event": "done", "session_id": "s1", "turn": 11, "response": "Always! What's something fun you're looking forward to?", "source": "llm", "prompt": "[seems calm; keep it light and ask a small follow-up question] You got it?", "latency_ms": {"state": 152, "first_token": 518, "response": 814}}

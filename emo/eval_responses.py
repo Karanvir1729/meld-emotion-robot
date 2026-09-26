@@ -5,7 +5,7 @@ import json
 from collections import Counter
 
 from emo.config import DEPLOYED_RUN, EMOTIONS, RUNS_DIR, pick_device
-from emo.data import load_manifest, visual_input
+from emo.data import live_inputs, load_manifest
 from emo.responder import finish, load_responder, render_messages
 from emo.session import Classifier, Session
 
@@ -28,7 +28,7 @@ def main() -> None:
 
     records = []
     for row in rows:
-        events = list(Session(classifier, responder).step(row["text"], row["audio_path"], visual_input(row)))  # fresh memory: single turn
+        events = list(Session(classifier, responder).step(row["text"], *live_inputs(row)))  # fresh memory: single turn
         state, done = events[0], events[-1]
         # Counterfactual: the same turn with only the emotion fields changed, greedy decoding on both sides.
         other = EMOTIONS[(EMOTIONS.index(state["emotion"]) + 1) % len(EMOTIONS)]

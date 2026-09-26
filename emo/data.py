@@ -75,11 +75,12 @@ def build_manifests() -> None:
         print(f"{split}: {len(kept)} utterances kept, {no_audio} without usable audio, {no_face} without a face, dropped {dropped or 'none'}")
 
 
-def visual_input(row: dict) -> str | None:
-    """What the robot would see for a manifest row: the raw clip when it was kept (live path), else the cached face crops."""
+def live_inputs(row: dict) -> tuple[str | None, str | None]:
+    """(audio, video) the robot would hand over for a manifest row: the raw clip when it was kept (it carries both the
+    voice and the face, as live), else the 16 kHz audio file and the cached face crops."""
     if Path(row["video_path"]).exists():
-        return row["video_path"]
-    return row["faces_dir"] if row["has_vision"] else None
+        return None, row["video_path"]
+    return (row["audio_path"] if row["has_audio"] else None), (row["faces_dir"] if row["has_vision"] else None)
 
 
 def load_manifest(split: str) -> list[dict]:

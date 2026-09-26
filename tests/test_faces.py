@@ -2,6 +2,7 @@
 
 import cv2
 import numpy as np
+import pytest
 
 from emo import faces
 from emo.faces import CLIP_NAME
@@ -24,3 +25,10 @@ def test_a_still_image_is_one_frame(tmp_path, monkeypatch):
     seen = []
     monkeypatch.setattr(faces, "largest_face", lambda frame: seen.append(frame.shape) or np.zeros((224, 224, 3), dtype=np.uint8))
     assert len(faces.faces_from_video(str(path))) == 1 and seen == [(120, 160, 3)]  # no ffmpeg, no detector download
+
+
+def test_an_undecodable_video_raises(tmp_path):
+    path = tmp_path / "clip.mp4"
+    path.write_bytes(b"not a video")
+    with pytest.raises(ValueError):
+        faces.faces_from_video(str(path))

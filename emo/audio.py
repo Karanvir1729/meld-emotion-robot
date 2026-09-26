@@ -3,6 +3,7 @@
 import argparse
 import os
 import shutil
+import subprocess
 import time
 
 import numpy as np
@@ -15,10 +16,22 @@ from emo.data import load_manifest
 
 
 def load_audio(path: str) -> np.ndarray | None:
-    """Mono float32 samples at 16 kHz, cropped to MAX_AUDIO_SECONDS. None when the clip is too short to use."""
-    wave, rate = sf.read(path, dtype="float32")
+    """Mono float32 samples at 16 kHz from any audio or video file, cropped to MAX_AUDIO_SECONDS.
+
+    16 kHz WAV/FLAC (the dataset) is read directly; anything else (a phone video, 44.1 kHz audio) is decoded and
+    resampled by ffmpeg. None when there is no usable audio (too short, or no audio track); ValueError when the
+    file cannot be decoded at all.
+    """
+    try:
+        wave, rate = sf.read(path, dtype="float32")
+    except sf.LibsndfileError:
+        wave, rate = None, None
     if rate != SAMPLE_RATE:
-        raise ValueError(f"{path}: expected {SAMPLE_RATE} Hz audio, got {rate} Hz. Convert with: ffmpeg -i {path} -ac 1 -ar {SAMPLE_RATE} out.wav")
+        decoded = subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-t", str(MAX_AUDIO_SECONDS), "-i", path, "-vn", "-ac", "1", "-ar", str(SAMPLE_RATE), "-f", "f32le", "-"],
+                                 capture_output=True, check=False)
+        if decoded.returncode and b"does not contain any stream" not in decoded.stderr:  # no audio track is fine, garbage is not
+            raise ValueError(f"{path}: cannot decode audio ({decoded.stderr.decode().strip().splitlines()[-1]})")
+        wave = np.frombuffer(decoded.stdout, dtype=np.float32)
     if wave.ndim > 1:
         wave = wave.mean(axis=1)
     if len(wave) < MIN_AUDIO_SECONDS * SAMPLE_RATE:

@@ -1,6 +1,7 @@
 """JSON Lines over stdin/stdout: one request per line in, the turn's events streamed back one per line.
 
-Request:  {"session_id": "s1", "text": "I said I was fine.", "video_path": "clip.mp4", "audio_path": "clip.flac"}   (video / audio optional)
+Request:  {"session_id": "s1", "text": "I said I was fine.", "video_path": "clip.mp4"}   (video optional; it supplies voice and face;
+          an "audio_path" can be given separately)
           {"session_id": "s1", "reset": true}
 Events:   ready, state, token, done, reset, error (see README for the fields).
 """
@@ -39,7 +40,7 @@ def main() -> None:
                 emit(event)
         except Exception as error:  # a bad request must not take the server down
             emit({"event": "error", "message": f"{type(error).__name__}: {error}",
-                  "hint": 'send {"session_id", "text", "video_path" (video/image, optional), "audio_path" (16 kHz mono WAV/FLAC, optional)} or {"session_id", "reset": true}'})
+                  "hint": 'send {"session_id", "text", "video_path" (video or image, optional), "audio_path" (any audio file, optional)} or {"session_id", "reset": true}'})
 
 
 def emit(event: dict) -> None:

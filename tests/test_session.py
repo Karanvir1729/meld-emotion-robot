@@ -10,6 +10,9 @@ class StubClassifier:
     def __init__(self):
         self.calls = []
 
+    def read_faces(self, video):
+        return None
+
     def classify(self, text, prev_text, wave=None, faces=None):
         self.calls.append((text, prev_text))
         return {"emotion": "anger", "confidence": 0.8, "certainty": "high", "probs": {}, "views": {"text": "surprise", "vision": "neutral", "agree": False}}

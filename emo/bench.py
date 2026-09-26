@@ -1,4 +1,4 @@
-"""Latency, memory and parameter budget of the deployed pipeline on this machine -> runs/bench_<device>.json."""
+"""Latency, memory and parameter budget on this machine -> runs/bench_<device>.json (deployed run) or bench_<device>_<run>.json."""
 
 import argparse
 import json
@@ -15,7 +15,7 @@ import torch
 import transformers
 
 from emo.config import DEPLOYED_RUN, REALTIME_TARGETS_MS, RUNS_DIR, pick_device
-from emo.data import load_manifest, visual_input
+from emo.data import live_inputs, load_manifest
 from emo.responder import load_responder
 from emo.session import Classifier, Session, parameter_counts
 
@@ -33,24 +33,34 @@ def main() -> None:
     classifier, responder = Classifier(args.run, device), load_responder(device)
     load_s = time.perf_counter() - start
     session = Session(classifier, responder)
-    needed = [m for m in classifier.model.modalities if m != "text"]
-    rows = [row for row in load_manifest("test") if all(row[f"has_{m}"] for m in needed)][: args.warmup + args.turns]
-    live_video = sum(Path(r["video_path"]).exists() for r in rows[args.warmup:]) if classifier.face_encoder else 0  # turns that decode a real clip
+    # The same turns for every run: the first test utterances with a face and usable audio, in dialogue order.
+    rows = [row for row in load_manifest("test") if row["has_audio"] and row["has_vision"]][: args.warmup + args.turns]
+    decodes_clips = classifier.audio_encoder or classifier.face_encoder
+    live_video = sum(Path(r["video_path"]).exists() for r in rows[args.warmup:]) if decodes_clips else 0  # turns that decode a real clip
 
     turns = []
     for i, row in enumerate(rows):
-        events = list(session.step(row["text"], row["audio_path"], visual_input(row)))
+        events = list(session.step(row["text"], *live_inputs(row)))
         if i == 0:
             cold_start_s = time.perf_counter() - start
         if i < args.warmup:
             continue
-        done = events[-1]
+        state, done = events[0], events[-1]
         latency = {**done["latency_ms"], "first_token": done["latency_ms"]["first_token"] or done["latency_ms"]["response"]}  # empty reply: no token
         generated = "".join(e["text"] for e in events if e["event"] == "token")
-        turns.append({**latency, "tokens": len(responder.tokenizer.encode(generated, add_special_tokens=False)), "source": done["source"]})
+        turns.append({**latency, "clip_s": state["audio_seconds"], "tokens": len(responder.tokenizer.encode(generated, add_special_tokens=False)), "source": done["source"]})
 
-    def percentile(key: str, q: int) -> int:
-        return round(float(np.percentile([t[key] for t in turns], q)))
+    def percentile(key: str, q: int, subset: list[dict] | None = None) -> int:
+        return round(float(np.percentile([t[key] for t in subset or turns], q)))
+
+    # The encoders' cost grows with the utterance: state latency per clip length (turns without audio are left out).
+    bins = {"under 3 s": (0, 3), "3 to 6 s": (3, 6), "6 s and longer": (6, 99)}
+    by_length = {}
+    for label, (lo, hi) in bins.items():
+        subset = [t for t in turns if t["clip_s"] is not None and lo <= t["clip_s"] < hi]
+        if subset:
+            by_length[label] = {"turns": len(subset), "state_p50": percentile("state", 50, subset), "state_p95": percentile("state", 95, subset),
+                                "first_token_p95": percentile("first_token", 95, subset)}
 
     decode_s = sum((t["response"] - t["first_token"]) / 1000 for t in turns)
     result = {
@@ -61,6 +71,7 @@ def main() -> None:
         "model_load_s": round(load_s, 1),
         "cold_start_s": round(cold_start_s, 1),
         "latency_ms": {key: {"p50": percentile(key, 50), "p95": percentile(key, 95), "target_p95": REALTIME_TARGETS_MS[key]} for key in REALTIME_TARGETS_MS},
+        "latency_ms_by_clip_length": by_length,
         "decode_tokens_per_s": round(sum(t["tokens"] for t in turns) / decode_s, 1),
         "fallback_rate": round(sum(t["source"] == "fallback" for t in turns) / len(turns), 3),
         "peak_rss_gb": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024) / 1e9, 2),
@@ -69,7 +80,8 @@ def main() -> None:
         "parameters_millions": parameter_counts(classifier, responder),
     }
     RUNS_DIR.mkdir(exist_ok=True)
-    (RUNS_DIR / f"bench_{device.type}.json").write_text(json.dumps(result, indent=2))
+    name = f"bench_{device.type}" + ("" if args.run == DEPLOYED_RUN else f"_{args.run}")  # the deployed run gets the short name
+    (RUNS_DIR / f"{name}.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
 
 

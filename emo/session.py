@@ -4,6 +4,7 @@ import json
 import time
 from collections import deque
 from collections.abc import Iterator
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 
 import torch
@@ -42,9 +43,17 @@ class Classifier:
         self.tokenizer = AutoTokenizer.from_pretrained(TEXT_MODEL) if self.model.use_text else None
         self.audio_encoder = AudioEncoder(self.device) if self.model.use_audio else None
         self.face_encoder = FaceEncoder(self.device) if self.model.use_vision else None
+        self.face_worker = ThreadPoolExecutor(max_workers=1)
+
+    def read_faces(self, video: str | None) -> Future | None:
+        """Start finding the faces in a video, image or directory of crops. It runs on the CPU in a thread, beside
+        the voice being decoded and encoded; classify() collects the result."""
+        if not (video and self.face_encoder):
+            return None
+        return self.face_worker.submit(load_faces if Path(video).is_dir() else faces_from_video, video)
 
     @torch.no_grad()
-    def classify(self, text: str, prev_text: str, wave=None, faces=None) -> dict:
+    def classify(self, text: str, prev_text: str, wave=None, faces: Future | None = None) -> dict:
         inputs = {}
         if self.tokenizer:
             inputs["tokens"] = {k: v.to(self.device) for k, v in tokenize(self.tokenizer, [text], [prev_text] if self.context else None).items()}
@@ -53,6 +62,7 @@ class Classifier:
             inputs["audio"] = (self.audio_encoder.embed(wave)[None] if present else torch.zeros(1, AUDIO_LAYERS, AUDIO_DIM)).to(self.device)
             inputs["audio_present"] = torch.tensor([present], device=self.device)
         if self.face_encoder:
+            faces = faces.result() if faces else None  # usually ready: detection ran while the voice was encoded
             present = bool(faces)
             inputs["vision"] = (self.face_encoder.embed(faces)[None] if present else torch.zeros(1, VISION_DIM)).to(self.device)
             inputs["vision_present"] = torch.tensor([present], device=self.device)
@@ -88,30 +98,32 @@ class Session:
         self.turn = 0
 
     def step(self, text: str, audio_path: str | None = None, video: str | None = None) -> Iterator[dict]:
-        """One endpointed utterance in (text, optional 16 kHz clip, optional video file or directory of face crops);
-        yields the state event, then reply pieces, then the done event."""
+        """One endpointed utterance in: the transcript, optionally an audio file, optionally a video (or image, or a
+        directory of face crops). A video file also supplies the voice when no audio file is given, so one recorded
+        clip is enough. Yields the state event, then reply pieces, then the done event."""
         start = time.perf_counter()
 
         def elapsed_ms() -> int:
             return round((time.perf_counter() - start) * 1000)
 
-        # Inputs are loaded before the turn counts, so unreadable input raises without side effects.
-        wave = load_audio(audio_path) if audio_path and self.classifier.audio_encoder else None
-        faces = None
-        if video and not Path(video).exists():
-            raise FileNotFoundError(video)
-        if video and self.classifier.face_encoder:
-            faces = load_faces(video) if Path(video).is_dir() else faces_from_video(video)
-        self.turn += 1
+        # Inputs are read before the turn counts, so a missing or undecodable file raises without side effects.
+        for path in (audio_path, video):
+            if path and not Path(path).exists():
+                raise FileNotFoundError(path)
+        faces = self.classifier.read_faces(video)
+        sound = audio_path or (video if video and Path(video).is_file() else None)
+        wave = load_audio(sound) if sound and self.classifier.audio_encoder else None
         prev_text = self.memory[-1]["text"] if self.memory else ""
+        fields = self.classifier.classify(text, prev_text, wave, faces)
+        self.turn += 1
         state = {
             "event": "state",
             "session_id": self.session_id,
             "turn": self.turn,
             "text": text,
             "audio_seconds": round(len(wave) / SAMPLE_RATE, 2) if wave is not None else None,
-            "faces": len(faces) if faces is not None else None,
-            **self.classifier.classify(text, prev_text, wave, faces),
+            "faces": len(faces.result()) if faces else None,
+            **fields,
             "context": list(self.memory),
             "latency_ms": {"state": elapsed_ms()},
         }
