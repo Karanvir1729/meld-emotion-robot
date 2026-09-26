@@ -14,9 +14,12 @@ features:   ## cache the frozen facial-expression and WavLM features for every c
 	$(RUN) emo.vision
 	$(RUN) emo.audio
 
-checkpoint: ## download the trained deployed model from the GitHub release instead of running faces + features + train
+RELEASE = https://github.com/Karanvir1729/meld-emotion-robot/releases/download/v0.3
+
+checkpoint: ## download the trained deployed model (165 MB) from the GitHub release instead of running features + train
 	mkdir -p runs/text-audio-vision
-	gh release download v0.3 --repo Karanvir1729/meld-emotion-robot --dir runs/text-audio-vision --clobber
+	curl -fL -o runs/text-audio-vision/model.pt $(RELEASE)/model.pt
+	curl -fL -o runs/text-audio-vision/run.json $(RELEASE)/run.json
 
 smoke:      ## one-minute end-to-end training check on 128 utterances (needs make features)
 	$(RUN) emo.train --modalities text,audio,vision --limit 128 --epochs 1 --name smoke

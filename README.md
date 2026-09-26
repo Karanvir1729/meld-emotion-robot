@@ -44,8 +44,8 @@ make responses  # reply checks on dev utterances -> runs/responses.md
 ```
 
 To try the demo without training: `make data` and `make faces`, then `make checkpoint` downloads the deployed
-model (165 MB) from the GitHub release into `runs/text-audio-vision/` (it uses the GitHub CLI, `gh auth
-login`, because the repository is private), and `make demo` works. After `make features`, `make smoke` (a
+model (165 MB) from the [v0.3 release](https://github.com/Karanvir1729/meld-emotion-robot/releases/tag/v0.3)
+into `runs/text-audio-vision/`, and `make demo` works. After `make features`, `make smoke` (a
 one-minute training run on 128 utterances) checks the training path before `make train`.
 
 Then talk to it yourself:
